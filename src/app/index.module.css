@@ -1,0 +1,50 @@
+.iconssearch24px {
+    width: 24px;
+    position: relative;
+    height: 24px;
+}
+.inputTextChild {
+    width: 1px;
+    position: relative;
+    border-right: 1px solid #000;
+    box-sizing: border-box;
+    height: 21px;
+}
+.findYourLore {
+    flex: 1;
+    position: relative;
+    letter-spacing: -0.02em;
+}
+.inputText {
+    width: 972px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+.searchContent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+.searchBar {
+    width: 100%;
+    position: relative;
+    box-shadow: 0px 1.0306363105773926px 4.12px rgba(0, 0, 0, 0.25) inset;
+    border-radius: 100px;
+     background-color: #faf7f7;
+    border: 1px solid #d4cfcf;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 24px;
+    text-align: left;
+    font-size: 16px;
+    color: #d4cfcf;
+    font-family: Inter;
+}
+

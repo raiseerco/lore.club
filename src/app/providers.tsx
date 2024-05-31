@@ -1,0 +1,24 @@
+"use client";
+
+import { PrivyProvider } from "@privy-io/react-auth";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <PrivyProvider
+      appId="clwglnkpj03bt4x243xkjb6tv" // TODO: move to an .env
+      config={{
+        appearance: {
+          theme: "light",
+          accentColor: "#676FFF",
+          //   logo: "http://localhost:3000/favicon.ico",
+        },
+        // Create embedded wallets for users who don't have a wallet
+        embeddedWallets: {
+          createOnLogin: "users-without-wallets",
+        },
+      }}
+    >
+      {children}
+    </PrivyProvider>
+  );
+}
