@@ -1,4 +1,4 @@
-export default {
+const configuration = {
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
@@ -15,3 +15,5 @@ export default {
     return config;
   },
 };
+
+export default configuration;
