@@ -1,6 +1,8 @@
-import "../../app/globals.css";
+// "use client";
 
-import Search24 from "@/components/ui/Icons/Search24.svg";
+// import "../../app/globals.css";
+
+import Search24Icon from "@/components/ui/Icons/Search24Icon.svg";
 import StyledIcon from "../StyledIcon";
 
 const SearchBar: any = () => {
@@ -14,7 +16,7 @@ const SearchBar: any = () => {
        items-center gap-2 inline-flex"
     >
       <div className="justify-start w-full items-center gap-2 flex flex-row">
-        <StyledIcon Icon={Search24} />
+        <StyledIcon Icon={Search24Icon} />
         <input
           placeholder="Find your lore or token"
           type="text"

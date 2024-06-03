@@ -1,3 +1,5 @@
+// "use client";
+
 interface SortCommandsProps {
   dummy?: boolean;
   // dropdownContent?: ReactNode;

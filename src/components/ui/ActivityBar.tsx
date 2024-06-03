@@ -1,3 +1,5 @@
+// "use client";
+
 interface ActivityBarProps {
   dummy?: boolean;
   // dropdownContent?: ReactNode;

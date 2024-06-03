@@ -1,13 +1,13 @@
-"use client";
+// "use client";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuLabel,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
 import GroupButton from "./GroupButton";
@@ -15,6 +15,7 @@ import LayoutGridIcon from "@/components/ui/Icons/LayoutGridIcon.svg";
 import LayoutListIcon from "@/components/ui/Icons/LayoutListIcon.svg";
 import Link from "next/link";
 import { LoginButton } from "./LoginButton";
+// import { LoginButton } from "./LoginButton";
 import Logo from "@/components/ui/Icons/Logo.svg";
 import NetworkSelector from "./NetworkSelector";
 import SearchBar from "./SearchBar";
