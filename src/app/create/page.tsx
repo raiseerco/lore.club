@@ -1,8 +1,7 @@
+"use client";
+
+import Layout from "../layout";
+
 export default function CreatePage() {
-  return (
-    <div>
-      <h1>Create Page</h1>
-      <p>This is the create page.</p>
-    </div>
-  );
+  return <h1>Create Coin</h1>;
 }

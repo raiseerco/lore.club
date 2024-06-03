@@ -1,12 +1,12 @@
-import "../app/globals.css";
+"use client";
 
-import Providers from "./providers";
-import { Shell } from "@/components/Shell";
+import { ViewGallery } from "@/components/ui/ViewGallery";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <Providers>
-      <Shell />
-    </Providers>
+    <>
+      {/* TODO populate with items  */}
+      <ViewGallery />
+    </>
   );
 }
