@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { parseUnits, formatUnits } from "viem";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,7 +16,7 @@ export function formatNumber(num: number | bigint): string {
   const oneTrillion = BigInt(1_000_000_000_000);
   const oneQuadrillion = BigInt(1_000_000_000_000_000);
   const oneQuintillion = BigInt(1_000_000_000_000_000_000);
-
+  console.log("bigNum ", bigNum);
   if (bigNum >= oneQuintillion) {
     return (bigNum / oneQuintillion).toString() + "P"; // Quintillions
   } else if (bigNum >= oneQuadrillion) {
@@ -32,3 +33,16 @@ export function formatNumber(num: number | bigint): string {
     return bigNum.toString();
   }
 }
+
+export const formatCurrency = (
+  value: number,
+  locale: string,
+  currency: string
+): string => {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 6,
+    maximumFractionDigits: 6,
+  }).format(value);
+};

@@ -1,0 +1,701 @@
+import { createPublicClient, http } from "viem";
+
+// import { Abi } from "viem";
+// import abiJson from "./abis/TokenFactoryABI.json";
+import { baseSepolia } from "viem/chains";
+
+// import { getContract } from "viem";
+// import { parseAbi } from "viem";
+
+const TokenFactoryABI = [
+  {
+    type: "constructor",
+    inputs: [
+      {
+        name: "_factoryParameters",
+        type: "tuple",
+        internalType: "struct TokenFactory.FactoryParameters",
+        components: [
+          {
+            name: "exchangeRouterAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "exchangeFactoryAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "initialSupply",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "initialETHReserve",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "tradingFee",
+            type: "uint16",
+            internalType: "uint16",
+          },
+          {
+            name: "completionFee",
+            type: "uint16",
+            internalType: "uint16",
+          },
+          {
+            name: "targetReserveETH",
+            type: "uint112",
+            internalType: "uint112",
+          },
+        ],
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "receive",
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "COMPLETION_FEE",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint16",
+        internalType: "uint16",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "EXCHANGE_FACTORY_ADDRESS",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "EXCHANGE_ROUTER_ADDRESS",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "INITIAL_ETH_RESERVE",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "INITIAL_SUPPLY",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "TARGET_RESERVE_ETH",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint112",
+        internalType: "uint112",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "TRADING_FEE",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint16",
+        internalType: "uint16",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "createToken",
+    inputs: [
+      {
+        name: "_params",
+        type: "tuple",
+        internalType: "struct TokenFactory.TokenParameters",
+        components: [
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "ticker",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "description",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "image",
+            type: "string",
+            internalType: "string",
+          },
+        ],
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "feesCollected",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getTokenInfo",
+    inputs: [
+      {
+        name: "_tokenAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct TokenFactory.TokenInfo",
+        components: [
+          {
+            name: "tokenAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "ticker",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "description",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "image",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "creator",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "poolAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "reserveToken",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "reserveETH",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "totalSupply",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "currentTokenPrice",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "tradingFee",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "completionFee",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "targetReserveETH",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "collectedFees",
+            type: "uint112",
+            internalType: "uint112",
+          },
+          {
+            name: "initialETHVirtualReserve",
+            type: "uint112",
+            internalType: "uint112",
+          },
+          {
+            name: "poolInitialized",
+            type: "bool",
+            internalType: "bool",
+          },
+          {
+            name: "presaleActive",
+            type: "bool",
+            internalType: "bool",
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getTokensCreated",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        internalType: "struct TokenFactory.TokenInfo[]",
+        components: [
+          {
+            name: "tokenAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "ticker",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "description",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "image",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "creator",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "poolAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "reserveToken",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "reserveETH",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "totalSupply",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "currentTokenPrice",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "tradingFee",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "completionFee",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "targetReserveETH",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "collectedFees",
+            type: "uint112",
+            internalType: "uint112",
+          },
+          {
+            name: "initialETHVirtualReserve",
+            type: "uint112",
+            internalType: "uint112",
+          },
+          {
+            name: "poolInitialized",
+            type: "bool",
+            internalType: "bool",
+          },
+          {
+            name: "presaleActive",
+            type: "bool",
+            internalType: "bool",
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "owner",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "renounceOwnership",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setCompletionFee",
+    inputs: [
+      {
+        name: "_completionFee",
+        type: "uint16",
+        internalType: "uint16",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setExchangeFactoryAddress",
+    inputs: [
+      {
+        name: "_factoryAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setExchangeRouterAddress",
+    inputs: [
+      {
+        name: "_exchangeAddress",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setInitialETHReserve",
+    inputs: [
+      {
+        name: "_initialETHReserve",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setInitialSupply",
+    inputs: [
+      {
+        name: "_initialSupply",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setTargetReserveETH",
+    inputs: [
+      {
+        name: "_targetReserveETH",
+        type: "uint112",
+        internalType: "uint112",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setTradingFee",
+    inputs: [
+      {
+        name: "_tradingFee",
+        type: "uint16",
+        internalType: "uint16",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "tokensCreated",
+    inputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "transferOwnership",
+    inputs: [
+      {
+        name: "newOwner",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "withdrawFees",
+    inputs: [
+      {
+        name: "_to",
+        type: "address",
+        internalType: "address payable",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "event",
+    name: "OwnershipTransferred",
+    inputs: [
+      {
+        name: "previousOwner",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "newOwner",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Received",
+    inputs: [
+      {
+        name: "sender",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "amount",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "TokenCreated",
+    inputs: [
+      {
+        name: "tokenAddress",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "creator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "name",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+      {
+        name: "ticker",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+      {
+        name: "description",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+      {
+        name: "image",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "TickerInUse",
+    inputs: [],
+  },
+] as const;
+
+const client = createPublicClient({
+  chain: baseSepolia,
+  transport: http(),
+});
+
+// const aaa = abiJson //.toString()
+// const tt = parseAbi([abiJson.toString()]);
+
+export async function getTokensCreated() {
+  try {
+    const result = await client.readContract({
+      address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
+      abi: TokenFactoryABI,
+      functionName: "getTokensCreated",
+      // args: ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']
+    });
+
+    return result;
+    // result.then((r) => {
+    //   r[0].completionFee;
+    // });
+    // const tokens = await contract.read.getTokensCreated();
+
+    // return tokens;
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function getBlockNumber() {
+  const blockNumber = await client.getBlockNumber();
+  return blockNumber;
+}
