@@ -31,14 +31,6 @@ import StyledIcon from "@/components/StyledIcon";
 import TelegramIcon from "@/components/ui/Icons/TelegramIcon.svg";
 import XIcon from "@/components/ui/Icons/XIcon.svg";
 
-// import { Shell } from "@/components/Shell";
-
-// export default function Home() {
-//   return (
-//     <Providers>
-//       <Shell />
-//     </Providers>
-
 export default function RootLayout({
   children,
 }: {
@@ -51,15 +43,25 @@ export default function RootLayout({
         <meta name="description" content="Lore club" />
       </head>
 
-      <body>
+      <body
+        style={{
+          background: "url(/background.png)",
+          backgroundSize: "cover",
+        }}
+      >
         <Providers>
           <HeadBar />
           {/* content screen */}
           <div className="flex min-h-screen">
             {/* sidebar */}
             <div
+              // style={{
+              //   background: "url(/backSidebar.png)",
+              //   backgroundSize: "cover",
+              // }}
               className="fixed left-0 top-16 bottom-0 z-30 flex w-44 
-            flex-col border-r bg-zinc-100 p-4 dark:border-gray-800 dark:bg-gray-950"
+            flex-col border-rs bg-zinc-100 p-4
+             dark:border-gray-800 dark:bg-gray-950"
             >
               <nav className="flex-1 space-y-2">
                 <div>
@@ -118,7 +120,7 @@ export default function RootLayout({
             </div>
 
             {/* main content */}
-            <main className="ml-44 mt-28 flex-1 overflow-y-auto p-4 md:p-6">
+            <main className="ml-44 bg-red-60s0 w-full  flex overflow-y-auto p-4 md:p-6">
               {children}
             </main>
           </div>

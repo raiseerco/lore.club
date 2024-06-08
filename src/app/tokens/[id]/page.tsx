@@ -102,7 +102,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
     },
   };
   return (
-    <>
+    <div className="mt-28">
       <Breadcrumb network="selected!" id={parseInt(id)} />
       <div className="flex flex-col lg:flex-row lg:gap-4">
         {/* left side  */}
@@ -394,6 +394,6 @@ export default function TokenPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
