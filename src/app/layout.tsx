@@ -24,7 +24,7 @@ import DiscordIcon from "@/components/ui/Icons/DiscordIcon.svg";
 import ExploreIcon from "@/components/ui/Icons/ExploreIcon.svg";
 import { HeadBar } from "@/components/ui/HeadBar";
 import HowIcon from "@/components/ui/Icons/HowIcon.svg";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import Link from "next/link";
 import Providers from "./providers";
 import StyledIcon from "@/components/StyledIcon";
@@ -37,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html className="bg-white dark:bg-stone-950" lang="en">
       <head>
         <title>Welcome to Lore.club</title>
         <meta name="description" content="Lore club" />
@@ -52,7 +52,12 @@ export default function RootLayout({
         <Providers>
           <HeadBar />
           {/* content screen */}
-          <div className="flex min-h-screen">
+          <div
+            className="flex min-h-screen
+           
+
+          "
+          >
             {/* sidebar */}
             <div
               // style={{
@@ -120,7 +125,7 @@ export default function RootLayout({
             </div>
 
             {/* main content */}
-            <main className="ml-44 bg-red-60s0 w-full  flex overflow-y-auto p-4 md:p-6">
+            <main className="ml-44 w-full flex overflow-y-auto">
               {children}
             </main>
           </div>

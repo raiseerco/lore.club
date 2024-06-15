@@ -9,10 +9,17 @@ const SearchBar: any = () => {
   return (
     <div
       className="w-full
-     h-10 px-5 py-2 bg-stone-50
+     h-10 px-5 py-2 
+     
+     bg-stone-50
+     border-stone-300
+     
+     dark:bg-stone-900
+     dark:border-stone-800
+
+     justify-start
      rounded-full
       shadow-inner border
-      border-stone-300 justify-start
        items-center gap-2 inline-flex"
     >
       <div className="justify-start w-full items-center gap-2 flex flex-row">
@@ -21,8 +28,11 @@ const SearchBar: any = () => {
           placeholder="Find your lore or token"
           type="text"
           className="w-full bg-transparent
-          placeholder-stone-300
-          outline-none text-stone-500 text-base"
+          placeholder-stone-500
+          outline-none 
+          text-stone-500
+          dark:text-stone-400
+           text-base"
         />
       </div>
     </div>
