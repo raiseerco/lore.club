@@ -19,7 +19,8 @@ export const LoginButton = () => {
     //   </button>
     // </div>
     <Button
-      className="rounded-full px-10"
+      className="rounded-full px-10
+      "
       variant="default"
       // disabled={disableLogin}
       onClick={logout}
@@ -28,7 +29,11 @@ export const LoginButton = () => {
     </Button>
   ) : (
     <Button
-      className="rounded-full px-10"
+      className="rounded-full px-10
+    dark:bg-stone-700
+    dark:text-stone-200
+    hover:dark:bg-stone-600
+    hover:dark:text-stone-100"
       variant="default"
       disabled={disableLogin}
       onClick={login}

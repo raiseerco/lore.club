@@ -7,7 +7,11 @@ export default function CreatePage() {
   const [block, setBlock] = useState<bigint>();
 
   return (
-    <div className="flex w-full mt-16 gap-6 justify-center">
+    <div
+      className="flex w-full mt-16 gap-6 justify-center
+ p-4 md:p-6
+    "
+    >
       {/* left side  */}
       <div
         className="p-2.5 bg-stone-50 rounded-3xl 

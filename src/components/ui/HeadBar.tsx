@@ -35,9 +35,12 @@ HeadBarProps) => {
   return (
     <header
       className="fixed top-0 left-0 right-0 z-30 flex h-16 w-full items-center 
-bg-zinc-100 shadow-md shadow-stone-300
-  border-b border-stone-300
-dark:bg-gray-950"
+      bg-stone-100 
+      dark:bg-stone-950
+      shadow-md
+      shadow-stone-300
+      border-stone-300
+      dark:shadow-black "
     >
       <div className="containers flex items-center w-full justify-between px-4 md:px-6">
         <Link className="w-44 flex items-center gap-2" href="#">
@@ -56,7 +59,7 @@ dark:bg-gray-950"
           <div className="flex items-center gap-2">
             <span
               className="
-            text-neutral-700
+            text-stone-500
             text-base
             font-medium
              leading-none

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { calculateMC, formatCurrency, formatNumber } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 import Link from "next/link";
@@ -14,24 +14,32 @@ export const TokenIcon = ({ tokenObject }: TokenIconProps) => {
   const [values, setValues] = useState("");
 
   useEffect(() => {
-    // Convertimos los valores de Wei a Ether
-    const va = parseFloat(formatUnits(tokenObject.currentTokenPrice, 18));
-    const totalSupplyEther = parseFloat(
-      formatUnits(tokenObject.totalSupply, 18)
-    );
+    const formattedPrice = formatUnits(tokenObject.currentTokenPrice, 9); // TODO CHECK
+    // console.log(".v ", v);
 
-    // Calculamos la capitalización de mercado (market cap)
-    const marketCap = va * totalSupplyEther;
+    const currPrice = parseFloat(formattedPrice);
+    // console.log(".currPrice ", currPrice);
+    const circSupply: bigint = (tokenObject.totalSupply as bigint) - 1n; //tokenObject.reserveToken;
 
-    // Formateamos el precio y la capitalización de mercado
-    const priceLine = `${formatCurrency(va, "en-US", "USD")} - ${formatCurrency(
-      marketCap,
-      "en-US",
-      "USD"
-    )}`;
+    console.log(".totalSupply ", parseFloat(formatUnits(circSupply, 18)));
 
+    const fCirc = parseFloat(formatUnits(circSupply, 18));
+
+    // const totalSupplyEther = parseFloat(formatUnits(circSupply, 18));
+
+    const marketCap = formatNumber(fCirc * currPrice);
+    // console.log(".marketCap ", marketCap);
+
+    const priceLine = calculateMC(tokenObject);
+    //  `${formatCurrency(va, "en-US", "USD")} - ${formatCurrency(
+    //   marketCap,
+    //   "en-US",
+    //   "USD"
+    // )}`;
+    console.log("valor ", priceLine);
     // Actualizamos el estado con el resultado formateado
-    setValues(priceLine);
+    // setValues(priceLine.toString());
+    setValues(`${currPrice} ~ MCap $${marketCap}`);
   }, [tokenObject]);
 
   return (
@@ -86,7 +94,7 @@ export const TokenIcon = ({ tokenObject }: TokenIconProps) => {
           {tokenObject.name}
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {values}
+          ${values}
         </p>
       </div>
     </div>
