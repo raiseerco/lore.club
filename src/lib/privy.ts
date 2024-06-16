@@ -695,6 +695,27 @@ export async function getTokensCreated() {
   }
 }
 
+export async function getTokenInfo(tokenAddress: string) {
+  try {
+    if (!tokenAddress) {
+      console.log("Nothing");
+      return null;
+    }
+
+    const addr = tokenAddress.replace("0x", "");
+    const result = await client.readContract({
+      address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
+      abi: TokenFactoryABI,
+      functionName: "getTokenInfo",
+      args: [`0x${addr}`],
+    });
+    return result;
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
 export async function getBlockNumber() {
   const blockNumber = await client.getBlockNumber();
   return blockNumber;
