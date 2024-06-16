@@ -3,7 +3,7 @@
 interface BreadcrumbProps {
   dummy?: boolean;
   network: string;
-  id: number;
+  id: string;
 }
 
 // TODO get token minting details from api

@@ -16,12 +16,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div
-      className="mt-28
-    p-4 md:p-6
-    "
-    >
-      {/* TODO populate with items  */}
+    <div className="mt-28 p-4 md:p-6">
       <ViewGallery tokensData={tokens} />
     </div>
   );
