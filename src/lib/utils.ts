@@ -6,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function shortAddress(address: string | undefined): string {
+  if (!address || typeof address === "undefined") {
+    return "error";
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 export function formatNumber(num: number | bigint): string {
   // Convert to BigInt if not already
   const bigNum = typeof num === "bigint" ? num : BigInt(num);
@@ -16,7 +24,7 @@ export function formatNumber(num: number | bigint): string {
   const oneTrillion = BigInt(1_000_000_000_000);
   const oneQuadrillion = BigInt(1_000_000_000_000_000);
   const oneQuintillion = BigInt(1_000_000_000_000_000_000);
-  console.log("bigNum ", bigNum);
+  console.log("ACA ", bigNum, new Date());
   if (bigNum >= oneQuintillion) {
     return (bigNum / oneQuintillion).toString() + "P"; // Quintillions
   } else if (bigNum >= oneQuadrillion) {
@@ -81,8 +89,34 @@ export function calculateMC(data: any) {
 
   return marketCap;
 }
+import { useRef, useCallback, useEffect } from "react";
+import { add } from "date-fns";
 
-function toDecimal(marketCap: any) {
-  // Convertir a decimal y limitar a 5 cifras decimales
-  return (marketCap / 1e18).toFixed(5);
+export function useDebounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedFunction = useCallback(
+    (...args: Parameters<T>) => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  return debouncedFunction;
 }

@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  buyTokens,
+  calculatePurchaseTokens,
+  getBalanceETH,
+  getEvents,
+  getTokenInfo,
+} from "@/lib/privy";
+import { formatNumber, useDebounce } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -13,23 +21,127 @@ import TelegramIcon from "@/components/ui/Icons/TelegramIcon.svg";
 import TxTable from "@/components/ui/TxTable";
 import WebIcon from "@/components/ui/Icons/WebIcon.svg";
 import XIcon from "@/components/ui/Icons/XIcon.svg";
-import { formatNumber } from "@/lib/utils";
-import { getTokenInfo } from "@/lib/privy";
+import { parseUnits } from "viem";
+import { useBalance } from "@/components/contexts/BalanceContext";
+import { usePrivy } from "@privy-io/react-auth";
+
+const DEFAULT_DEADLINE_MINS = 10;
 
 export default function TokenPage({ params }: { params: { id: string } }) {
   const { id } = params;
 
   const [tokenData, setTokenData] = useState<any>(null);
   const [loadingTx, setLoadingTx] = useState(true);
+  const [isEnough, setIsEnough] = useState(false);
+  const [ethAmount, setEthAmount] = useState("");
+  const { balance, setBalance } = useBalance();
+  const { user } = usePrivy();
+  const [tokensToPurchase, setTokensToPurchase] = useState<
+    string | undefined
+  >();
+
+  const handleInput = (ethValue: string) => {
+    console.log("ethValue ", ethValue === "");
+    console.log("bouncing, calculating output...", id, ethValue);
+
+    if (parseFloat(ethValue) === 0 || balance === 0) {
+      console.log("input zero");
+      setTokensToPurchase("0");
+      setIsEnough(false);
+      return;
+    }
+
+    if (balance < parseFloat(ethValue)) {
+      setIsEnough(false);
+    } else {
+      setIsEnough(true);
+    }
+
+    setEthAmount(ethValue);
+    return calculatePurchaseTokens(id, ethValue).then((res) => {
+      console.log("resu: ", res);
+      setTokensToPurchase(res?.tokensToPurchase.toString());
+    });
+  };
+
+  const debouncedInputHandler = useDebounce(handleInput, 500);
+
+  // informative functions
+  async function fetchTokenTransfers(
+    tokenAddress: string,
+    fromBlock: string,
+    toBlock: string
+  ) {
+    console.log("param address ", tokenAddress);
+
+    const url = new URL(`/api/transactions`, window.location.origin);
+    url.searchParams.append("token", tokenAddress);
+    // url.searchParams.append('fromBlock', fromBlock);
+    // url.searchParams.append('toBlock', toBlock);
+    // if (from) url.searchParams.append('from', from);
+    // if (to) url.searchParams.append('to', to);
+    const response = await fetch(url);
+
+    // const response = await fetch(
+    //   `/api/${tokenAddress}`
+    //   // ?fromBlock=${fromBlock}&toBlock=${toBlock}`
+    // );
+
+    console.log("response ", response);
+    if (!response.ok) {
+      throw new Error("Failed to fetch token transfers");
+    }
+    return response.json();
+  }
+
+  const handleBuy = () => {
+    if (user?.wallet?.address && tokensToPurchase) {
+      console.log("buying: ", tokensToPurchase);
+
+      const deadlineInSeconds =
+        Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_MINS * 60;
+
+      return buyTokens(
+        id,
+        parseUnits(tokensToPurchase, 9),
+        ethAmount,
+        parseUnits(deadlineInSeconds.toString(), 9),
+        user?.wallet?.address
+      );
+    }
+  };
 
   useEffect(() => {
+    fetchTokenTransfers("item.tokenAddress", "earliest", "latest")
+      .then((data) => console.log("The data logs! ", data))
+      .catch((error) => console.error(error));
+
     getTokenInfo(id).then((item) => {
+      if (!item) {
+        return;
+      }
       console.log("dataaaa ", item);
 
       setTokenData(item);
       // load tx
+      // getEvents(); deprecated?
+
+      return fetchTokenTransfers(item.tokenAddress, "earliest", "latest")
+        .then((data) => console.log("The data logs! ", data))
+        .catch((error) => console.error(error));
     });
   }, [id]);
+
+  useEffect(() => {
+    const fetchBalance = async (address: string) => {
+      const balanceValue = await getBalanceETH(address);
+      setBalance(balanceValue ? parseFloat(balanceValue) : 0);
+    };
+
+    if (user?.wallet?.address) {
+      fetchBalance(user?.wallet?.address);
+    }
+  }, [setBalance, user?.wallet?.address]);
 
   interface Transaction {
     time: Date;
@@ -89,33 +201,6 @@ export default function TokenPage({ params }: { params: { id: string } }) {
     },
   ];
 
-  const tokenDummy = {
-    id: id,
-    name: "myToken",
-    ticker: "MTK",
-    price: 3333.444,
-    variation: 0.16,
-    volume24h: 128922.333,
-    ohlcData: [],
-    liquidity: 123000,
-    mcap: 12300012342,
-    holders: 660,
-    platformRank: 223,
-    txData: [txData],
-    tokenMetadata: {
-      creatorAddress: "0x000",
-      network: "Solana",
-      projectAbout:
-        "RSIC•GENESIS•RUNE (also known as RUNECOIN or RSIC) is the first Pre-Rune airdropped to the early adopters of Ordinals. Runecoin is a token designed with intention and innovation. As the 8th Rune etched on the Runes protocol with the airdrop size of 888 Satoshis, it adds a touch of 'luck' by echoing the symbolic meaning of the lucky number 8 in culture. Runecoin's 21 billion token supply also pays tribute to Bitcoin's famous 21 million hard cap.",
-      urlMain: "www.xyz.io",
-      urlX: "x.com/xyz",
-      urlDiscord: "discord.com/xyz",
-      urlTelegram: "t.me/xyz",
-      pool: "0x...",
-      urlExplorer: "solscan.com/token/xyz",
-      tokenHolders: [],
-    },
-  };
   return (
     <div className="mt-28 mx-4 flex w-full justify-center">
       {tokenData ? (
@@ -164,10 +249,10 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                 <div className="flex text-sm">
                   {/* FIXME */}
                   <p className=" text-green-500 bg-amber-700">
-                    {tokenDummy.variation}%
+                    {/* {tokenDummy.variation}% */}
                   </p>
                   <p className="ml-3 text-gray-500  bg-amber-700">
-                    {tokenDummy.volume24h}
+                    {/* {tokenDummy.volume24h} */}
                   </p>
                 </div>
               </div>
@@ -177,17 +262,17 @@ export default function TokenPage({ params }: { params: { id: string } }) {
               <div className="mb-3 flex gap-6 bg-amber-700">
                 <div>
                   <p className="text-2xl">
-                    ${formatNumber(tokenDummy.liquidity)}
+                    {/* ${formatNumber(tokenDummy.liquidity)} */}
                   </p>
                   <p className="text-sm">Liquidity</p>
                 </div>
                 <div>
-                  <p className="text-2xl">${formatNumber(tokenDummy.mcap)}</p>
+                  {/* <p className="text-2xl">${formatNumber(tokenDummy.mcap)}</p> */}
                   <p className="text-sm">Market cap</p>
                 </div>
                 <div>
                   <p className="text-2xl">
-                    ${formatNumber(tokenDummy.holders)}
+                    {/* ${formatNumber(tokenDummy.holders)} */}
                   </p>
                   <p className="text-sm">Holders</p>
                 </div>
@@ -232,16 +317,53 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                     <div className="w-full h-[88px] p-4 bg-white rounded-2xl border border-stone-300 flex justify-between items-center">
                       <div className="flex flex-col justify-center items-start gap-0.5">
                         <div className="flex justify-center items-center">
-                          <div className="text-neutral-700 text-2xl font-medium">
-                            0,00
-                          </div>
+                          <input
+                            placeholder="0.00"
+                            type="text"
+                            onChange={(e) => {
+                              const sanitized = e.target.value.replace(
+                                /,/g,
+                                "."
+                              );
+                              e.target.value = /^[0-9]*\.?[0-9]*$/.test(
+                                sanitized
+                              )
+                                ? sanitized
+                                : sanitized.slice(0, -1);
+                              if (e.target.value === "") {
+                                return;
+                              }
+
+                              debouncedInputHandler(e.target.value);
+                            }}
+                            //   onChange={(
+                            //     e: React.ChangeEvent<HTMLInputElement>
+                            //   ) => {
+                            //     const sanitized = e.target.value.replace(
+                            //       /,/g,
+                            //       "."
+                            //     );
+                            //     e.target.value = /^[0-9]*\.?[0-9]*$/.test(
+                            //       sanitized
+                            //     )
+                            //       ? sanitized
+                            //       : sanitized.slice(0, -1);
+                            //   }
+                            // }
+                            className="w-full bg-transparent
+                              placeholder-stone-300
+                              outline-none 
+                              text-black
+                              dark:text-stone-400
+                              text-2xl"
+                          />
                         </div>
                         <div className="flex flex-col justify-start items-start gap-px">
                           <div className="text-neutral-700 text-xs font-medium">
-                            Receive
+                            You pay
                           </div>
                           <div className="text-neutral-700 text-xs font-medium">
-                            $0,00
+                            $0.00
                           </div>
                         </div>
                       </div>
@@ -249,12 +371,12 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                         <div className="px-1.5 py-1 bg-white rounded-full border border-stone-300 flex justify-end items-center gap-1">
                           <div className="h-[26px] bg-stone-50 rounded-full border border-stone-300 flex justify-center items-center">
                             <img
-                              className="w-[26px] h-[26px] rounded-full border border-stone-400"
+                              className=" rounded-full border border-stone-400"
                               src="https://via.placeholder.com/26x26"
                             />
                           </div>
                           <div className="text-center text-neutral-700 text-sm font-normal">
-                            CLYP
+                            ETH
                           </div>
                         </div>
                       </div>
@@ -262,16 +384,58 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                     <div className="w-full h-[88px] p-4 bg-white rounded-2xl border border-stone-300 flex justify-between items-center">
                       <div className="flex flex-col justify-center items-start gap-0.5">
                         <div className="flex justify-center items-center">
-                          <div className="text-neutral-700 text-2xl font-medium">
-                            0,00
-                          </div>
+                          {/* <div className="text-neutral-700 text-2xl font-medium">
+                            0.00
+                          </div> */}
+
+                          <input
+                            placeholder="0.00"
+                            type="text"
+                            defaultValue={tokensToPurchase}
+                            onChange={(e) => {
+                              const sanitized = e.target.value.replace(
+                                /,/g,
+                                "."
+                              );
+                              e.target.value = /^[0-9]*\.?[0-9]*$/.test(
+                                sanitized
+                              )
+                                ? sanitized
+                                : sanitized.slice(0, -1);
+                              if (e.target.value === "") {
+                                return;
+                              }
+
+                              debouncedInputHandler(e.target.value);
+                            }}
+                            //   onChange={(
+                            //     e: React.ChangeEvent<HTMLInputElement>
+                            //   ) => {
+                            //     const sanitized = e.target.value.replace(
+                            //       /,/g,
+                            //       "."
+                            //     );
+                            //     e.target.value = /^[0-9]*\.?[0-9]*$/.test(
+                            //       sanitized
+                            //     )
+                            //       ? sanitized
+                            //       : sanitized.slice(0, -1);
+                            //   }
+                            // }
+                            className="w-full bg-transparent
+                              placeholder-stone-300
+                              outline-none 
+                              text-black
+                              dark:text-stone-400
+                              text-2xl"
+                          />
                         </div>
                         <div className="flex flex-col justify-start items-start gap-px">
                           <div className="text-neutral-700 text-xs font-medium">
-                            You pay
+                            You receive
                           </div>
                           <div className="text-neutral-700 text-xs font-medium">
-                            $0,00
+                            $0.00
                           </div>
                         </div>
                       </div>
@@ -279,12 +443,12 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                         <div className="px-1.5 py-1 bg-white rounded-full border border-stone-300 flex justify-end items-center gap-1">
                           <div className="w-[26px] h-[26px] flex justify-center items-center">
                             <img
-                              className="w-[26px] h-[26px] rounded-full border border-stone-400"
+                              className="rounded-full border border-stone-400"
                               src="https://via.placeholder.com/26x26"
                             />
                           </div>
                           <div className="text-center text-neutral-700 text-sm font-normal">
-                            ETH
+                            {tokenData.ticker}
                           </div>
                         </div>
                       </div>
@@ -312,11 +476,22 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                     </button>
                   </div>
 
-                  <div className="w-full h-12 bg-stone-900 rounded-2xl flex justify-center items-center">
-                    <div className="text-center text-white text-sm font-medium">
-                      Buy [Token]
+                  {isEnough ? (
+                    <button
+                      className="w-full h-12 bg-stone-900 rounded-2xl flex justify-center items-center"
+                      onClick={handleBuy}
+                    >
+                      <span className="text-center text-white text-sm font-medium">
+                        Buy {tokenData.ticker}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="w-full h-12 bg-stone-300 rounded-2xl flex justify-center items-center">
+                      <span className="text-center text-white text-sm font-medium">
+                        Insufficient balance
+                      </span>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
