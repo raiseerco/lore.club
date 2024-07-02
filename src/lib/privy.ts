@@ -1674,7 +1674,7 @@ export async function getTokenInfo(tokenAddress: string) {
 }
 export const walletClient = createWalletClient({
   chain: DEFAULT_NETWORK,
-  transport: custom(window.ethereum),
+  transport: custom(window?.ethereum),
 });
 
 export async function getEvents() {
