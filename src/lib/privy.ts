@@ -1672,10 +1672,21 @@ export async function getTokenInfo(tokenAddress: string) {
     throw error;
   }
 }
-export const walletClient = createWalletClient({
-  chain: DEFAULT_NETWORK,
-  transport: custom(window?.ethereum),
-});
+// export const walletClient = createWalletClient({
+//   chain: DEFAULT_NETWORK,
+//   transport: custom(window?.ethereum),
+// });
+
+export function getWalletClient() {
+  if (typeof window === "undefined") {
+    return undefined; // Retorna null o maneja de otra manera cuando no está en el cliente
+  }
+
+  return createWalletClient({
+    chain: DEFAULT_NETWORK,
+    transport: custom(window.ethereum),
+  });
+}
 
 export async function getEvents() {
   const unwatch = await publicClient.watchEvent({
@@ -1750,7 +1761,11 @@ export async function buyTokens(
 
     console.log("🥰🥰🥰🥰 ", request);
 
-    const hash = await walletClient.writeContract(request);
+    const c = getWalletClient();
+    if (!c) {
+      return;
+    }
+    const hash = await c.writeContract(request);
     console.log("🥰🥰🥰🥰 hash", hash);
 
     return {
