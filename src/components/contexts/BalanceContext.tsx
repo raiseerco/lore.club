@@ -3,6 +3,8 @@ import React, { ReactNode, createContext, useContext, useState } from "react";
 interface BalanceContextType {
   balance: number;
   setBalance: (newBalance: number) => void;
+  ethPrice: number;
+  setEthPrice: (newEthPrice: number) => void;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
@@ -11,13 +13,24 @@ export const BalanceProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [balance, setBalance] = useState<number>(0);
+  const [ethPrice, setEthPrice] = useState<number>(0);
 
   const handleSetBalance = (newBalance: number) => {
     setBalance(newBalance);
   };
+  const handleSetEthPrice = (newEthPrice: number) => {
+    setEthPrice(newEthPrice);
+  };
 
   return (
-    <BalanceContext.Provider value={{ balance, setBalance: handleSetBalance }}>
+    <BalanceContext.Provider
+      value={{
+        balance,
+        setBalance: handleSetBalance,
+        ethPrice,
+        setEthPrice: handleSetEthPrice,
+      }}
+    >
       {children}
     </BalanceContext.Provider>
   );
