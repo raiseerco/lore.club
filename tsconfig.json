@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "target": "es2022", // O "esnext", "node16", etc.
-    "moduleResolution": "node",
+    "target": "es2022",
     "lib": [
       "dom",
       "es2022",

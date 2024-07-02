@@ -1,32 +1,37 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Profile from "../Profile";
+import { shortAddress } from "@/lib/utils";
 import { usePrivy } from "@privy-io/react-auth";
+import { useState } from "react";
 
 export const LoginButton = () => {
   const { ready, authenticated, login, logout, user } = usePrivy();
+  const [showMenu, setShowMenu] = useState(false);
   // Disable login when Privy is not ready or the user is already authenticated
   const disableLogin = !ready || (ready && authenticated);
 
+  const handleClick = () => {
+    setShowMenu(!showMenu);
+    console.log("click ", showMenu);
+  };
+
   return authenticated ? (
-    // <div className="flex flex-row justify-between">
-    //   <h1 className="text-2xl font-semibold">Privy Auth Demo</h1>
-    //   <button
-    //     onClick={logout}
-    //     className="text-sm bg-violet-200 hover:text-violet-900 py-2 px-4 rounded-md text-violet-700"
-    //   >
-    //     Logout
-    //   </button>
-    // </div>
-    <Button
-      className="rounded-full px-10
-      "
-      variant="default"
-      // disabled={disableLogin}
-      onClick={logout}
-    >
-      {user?.wallet?.address} Logout
-    </Button>
+    <div className="grid relative">
+      <Button
+        // disabled={disableLogin}
+        className="rounded-full px-10 z-20"
+        variant="default"
+        onClick={handleClick}
+      >
+        {shortAddress(user?.wallet?.address)} ⏷
+      </Button>
+
+      <div className="justify-self-end absolute">
+        {showMenu ? <Profile address={user?.wallet?.address} /> : ""}
+      </div>
+    </div>
   ) : (
     <Button
       className="rounded-full px-10

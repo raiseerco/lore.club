@@ -1,13 +1,25 @@
-import { createPublicClient, http } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  custom,
+  formatEther,
+  http,
+  parseEther,
+} from "viem";
 
-// import { Abi } from "viem";
-// import abiJson from "./abis/TokenFactoryABI.json";
 import { baseSepolia } from "viem/chains";
+import { parseUnits } from "viem";
+
+const DEFAULT_NETWORK = baseSepolia;
+
+// import { createWalletClient } from 'viem'
+
+// import tokenAbi from "./abis/TokenABI.json"; // TODO Viem does not infere when using an imported file, must be inline defined
 
 // import { getContract } from "viem";
 // import { parseAbi } from "viem";
 
-const TokenFactoryABI = [
+const tokenFactoryABI = [
   {
     type: "constructor",
     inputs: [
@@ -665,19 +677,944 @@ const TokenFactoryABI = [
   },
 ] as const;
 
-const client = createPublicClient({
-  chain: baseSepolia,
-  transport: http(),
-});
+const tokenABI = [
+  {
+    type: "constructor",
+    inputs: [
+      {
+        name: "_tokenParameters",
+        type: "tuple",
+        internalType: "struct ERC20AMM.TokenParameters",
+        components: [
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "ticker",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "description",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "image",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "creator",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "exchangeRouter",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "exchangeFactory",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "initialETHVirtualReserve",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "totalSupply",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "tradingFee",
+            type: "uint16",
+            internalType: "uint16",
+          },
+          {
+            name: "completionFee",
+            type: "uint16",
+            internalType: "uint16",
+          },
+          {
+            name: "targetReserveETH",
+            type: "uint256",
+            internalType: "uint256",
+          },
+        ],
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "receive",
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "DEAD_ADDRESS",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "allowance",
+    inputs: [
+      {
+        name: "owner",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "spender",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "approve",
+    inputs: [
+      {
+        name: "spender",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "amount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "balanceOf",
+    inputs: [
+      {
+        name: "account",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "buyTokens",
+    inputs: [
+      {
+        name: "_minTokensOut",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "_deadline",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "calculatePurchaseTokens",
+    inputs: [
+      {
+        name: "_ethAmount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "tokensToPurchase",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "feeAmount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "excessETH",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "calculateSaleTokens",
+    inputs: [
+      {
+        name: "_tokenAmount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "netFee",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "ethFee",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "collectedFees",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint112",
+        internalType: "uint112",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "completionFee",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint16",
+        internalType: "uint16",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "creator",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "decimals",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint8",
+        internalType: "uint8",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "decreaseAllowance",
+    inputs: [
+      {
+        name: "spender",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "subtractedValue",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "description",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "ethAccumulated",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "factory",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getCurrentETHPriceInToken",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getCurrentTokenPriceInETH",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getMaxTokensToBuyWithETH",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getReserves",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "image",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "increaseAllowance",
+    inputs: [
+      {
+        name: "spender",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "addedValue",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "initialETHVirtualReserve",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint112",
+        internalType: "uint112",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "name",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "poolAddress",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "poolInitialized",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "presaleActive",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "sellTokens",
+    inputs: [
+      {
+        name: "_tokenAmount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "_minETHOut",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "_deadline",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "symbol",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "targetReserveETH",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "totalSupply",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "tradingFee",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "uint16",
+        internalType: "uint16",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "transfer",
+    inputs: [
+      {
+        name: "to",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "amount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "transferFrom",
+    inputs: [
+      {
+        name: "from",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "to",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "amount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "uniswapFactory",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "contract IUniswapV2Factory",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "uniswapRouter",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "contract IUniswapV2Router02",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "event",
+    name: "Approval",
+    inputs: [
+      {
+        name: "owner",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "spender",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "value",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "PoolCreated",
+    inputs: [
+      {
+        name: "tokenAddress",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "poolAddress",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "tokensDeposited",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "ethDeposited",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "liquidityTokens",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ReserveRecalibrated",
+    inputs: [
+      {
+        name: "newReserveETH",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "TokensPurchased",
+    inputs: [
+      {
+        name: "buyer",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "amountSpentETH",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "amountTokensReceived",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "minTokensExpected",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "feesPaid",
+        type: "uint112",
+        indexed: false,
+        internalType: "uint112",
+      },
+      {
+        name: "deadline",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "TokensSold",
+    inputs: [
+      {
+        name: "seller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "amountTokensSold",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "amountETHReceived",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "minETHExpected",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "feesPaid",
+        type: "uint112",
+        indexed: false,
+        internalType: "uint112",
+      },
+      {
+        name: "deadline",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      {
+        name: "from",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "to",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "value",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "EthCannotBeZero",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "FailedToTransferETH",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InsufficientETHReserves",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InsufficientTokenAmount",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "InvariantViolation",
+    inputs: [
+      {
+        name: "kCurrent",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "kExpected",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "PoolInitializationFailed",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "PresaleNotActive",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SlippageToleranceExceeded",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TokenAmountCannotBeZero",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TokenAmountExceedsTokensInCirculation",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TokenAmountExceedsTotalSupply",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TradingFeeCannotBeZero",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TransactionExpired",
+    inputs: [],
+  },
+] as const;
 
-// const aaa = abiJson //.toString()
-// const tt = parseAbi([abiJson.toString()]);
+export const publicClient = createPublicClient({
+  chain: DEFAULT_NETWORK,
+  transport: http(
+    "https://base-sepolia.infura.io/v3/b96017bda544465082cb0d697443f0ee"
+  ),
+});
 
 export async function getTokensCreated() {
   try {
-    const result = await client.readContract({
+    const result = await publicClient.readContract({
       address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
-      abi: TokenFactoryABI,
+      abi: tokenFactoryABI,
       functionName: "getTokensCreated",
       // args: ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']
     });
@@ -695,6 +1632,25 @@ export async function getTokensCreated() {
   }
 }
 
+export async function getBalanceETH(addr: string) {
+  try {
+    if (!addr) {
+      console.log("Nothing");
+      return null;
+    }
+
+    const balance = await publicClient.getBalance({
+      address: `0x${addr.replace("0x", "")}`,
+      blockTag: "safe",
+    });
+
+    return formatEther(balance);
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
 export async function getTokenInfo(tokenAddress: string) {
   try {
     if (!tokenAddress) {
@@ -703,20 +1659,108 @@ export async function getTokenInfo(tokenAddress: string) {
     }
 
     const addr = tokenAddress.replace("0x", "");
-    const result = await client.readContract({
+    const result = await publicClient.readContract({
       address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
-      abi: TokenFactoryABI,
+      abi: tokenFactoryABI,
       functionName: "getTokenInfo",
       args: [`0x${addr}`],
     });
+
     return result;
   } catch (error) {
     console.error("Error: ", error);
     throw error;
   }
 }
+export const walletClient = createWalletClient({
+  chain: DEFAULT_NETWORK,
+  transport: custom(window.ethereum),
+});
+
+export async function getEvents() {
+  const unwatch = await publicClient.watchEvent({
+    address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
+    onLogs: (logs) => console.log("logs ", logs),
+  });
+}
 
 export async function getBlockNumber() {
-  const blockNumber = await client.getBlockNumber();
+  const blockNumber = await publicClient.getBlockNumber();
   return blockNumber;
+}
+
+export async function calculatePurchaseTokens(
+  tokenAddress: string,
+  _ethAmount: string
+) {
+  try {
+    if (!tokenAddress || !_ethAmount) {
+      console.log("No values to calculate");
+      return null;
+    }
+
+    const ethAmount = parseUnits(_ethAmount, 18);
+
+    const addr = tokenAddress.replace("0x", "");
+    const result = await publicClient.readContract({
+      address: `0x${addr}`,
+      abi: tokenABI,
+      functionName: "calculatePurchaseTokens",
+      args: [BigInt(ethAmount)],
+    });
+
+    return {
+      tokensToPurchase: formatEther(result[0]),
+      feeAmount: result[1],
+      excessETH: result[2],
+    };
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function buyTokens(
+  _tokenAddress: string,
+  _minTokensOut: bigint,
+  _ether: string,
+  _deadline: bigint,
+  _account: string
+) {
+  try {
+    if (!_minTokensOut || !_deadline) {
+      console.log("No values to calculate");
+      return null;
+    }
+
+    console.log("_tokenAddress: ", _tokenAddress);
+    console.log("_minTokensOut: ", _minTokensOut);
+    console.log("_deadline: ", _deadline);
+    console.log("_ether: ", _ether);
+    console.log("_account: ", _account);
+
+    const { request } = await publicClient.simulateContract({
+      account: `0x${_account.replace("0x", "")}`,
+      address: `0x${_tokenAddress.replace("0x", "")}`,
+      abi: tokenABI,
+      functionName: "buyTokens",
+      value: parseEther(_ether),
+      args: [_minTokensOut, _deadline],
+    });
+
+    console.log("🥰🥰🥰🥰 ", request);
+
+    const hash = await walletClient.writeContract(request);
+    console.log("🥰🥰🥰🥰 hash", hash);
+
+    return {
+      // tokensToPurchase: formatEther(result[0]),
+      // feeAmount: result[1],
+      // excessETH: result[2],
+      hash,
+    };
+  } catch (error) {
+    console.log("😎😎😎 Error: ", error);
+    throw error;
+  }
 }
