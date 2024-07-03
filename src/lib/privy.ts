@@ -1622,7 +1622,10 @@ export const mainnetClient = createPublicClient({
 export async function getTokensCreated() {
   try {
     const result = await publicClient.readContract({
-      address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
+      address: `0x${
+        process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
+        "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"
+      }`,
       abi: tokenFactoryABI,
       functionName: "getTokensCreated",
       // args: ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']
