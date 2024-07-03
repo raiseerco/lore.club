@@ -35,7 +35,11 @@ const Chip: React.FC<ChipsProps> = ({ text }) => {
   }, [text]);
 
   return (
-    <div className="w-[119px] h-[34px] p-1 bg-zinc-100 rounded-[100px] justify-center items-center gap-1 inline-flex">
+    <div
+      className="py-1 px-2 bg-stone-100 dark:bg-stone-700
+    
+    rounded-full justify-center items-center gap-1 inline-flex"
+    >
       <div className="justify-center items-center gap-1 flex">
         <canvas
           ref={canvasRef}
@@ -43,7 +47,9 @@ const Chip: React.FC<ChipsProps> = ({ text }) => {
           height={26}
           className="w-[26px] h-[26px] rounded-[14px] border border-stone-400"
         />
-        <div className="text-center text-neutral-700 text-sm">{text}</div>
+        <div className="text-center text-neutral-700 dark:text-neutral-300 text-sm">
+          {text}
+        </div>
       </div>
     </div>
   );
