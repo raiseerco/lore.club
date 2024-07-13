@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { parseUnits, formatUnits } from "viem";
+import { useRef, useCallback, useEffect } from "react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -55,33 +56,6 @@ export const formatCurrency = (
   }).format(value);
 };
 
-export const calculateMCap = (token: any) => ({
-  /*
- 
-{ 
-  collectedFees: 0n,
-  completionFee: 400n,
-  creator: "0x23BF95De9F90338F973056351C8Cd2CB78cbe52f",
-  currentTokenPrice: 900000000n,
-  description: "Token Description #1",
-  image: "https://gray-lucky-louse-813.mypinata.cloud/ipfs/QmccigNmKpKgqprK31VXXRzYFBsXDw651SNXg5DniuE3HP/1.webp",
-  initialETHVirtualReserve: 900000000000000000n,
-  name: "Meme Token #1",
-  poolAddress: "0x0000000000000000000000000000000000000000",
-  poolInitialized: false,
-  presaleActive: true,
-  reserveETH: 900000000000000000n,
-  reserveToken: 1000000000000000000000000000n,
-  targetReserveETH: 4000000000000000000n,
-  ticker: "MEME1",
-  tokenAddress: "0x7CF77357467fD2CdAd2A7E549Da836FbA0955ff2",
-  totalSupply: 1000000000000000000000000000n,
-  tradingFee: 100n,
-}
-  
-*/
-});
-
 export function calculateMC(data: any) {
   const { totalSupply, reserveToken, currentTokenPrice } = data;
 
@@ -89,8 +63,6 @@ export function calculateMC(data: any) {
 
   return marketCap;
 }
-import { useRef, useCallback, useEffect } from "react";
-import { add } from "date-fns";
 
 export function useDebounce<T extends (...args: any[]) => void>(
   callback: T,

@@ -5,6 +5,49 @@ import { useEffect, useState } from "react";
 
 export default function CreatePage() {
   const [block, setBlock] = useState<bigint>();
+  const [name, setName] = useState("");
+  const [ticker, setTicker] = useState("");
+  const [lore, setLore] = useState("");
+  const [description, setDescription] = useState("");
+  const [web, setWeb] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [telegram, setTelegram] = useState("");
+  const [discord, setDiscord] = useState("");
+  const [picture, setPicture] = useState("");
+
+  // useEffect(() => {
+  //   const fetchBalances = async (address: string) => {
+  //     let balanceValue: string | null;
+  //     if (tokenA === "ETH") {
+  //       balanceValue = await getBalanceETH(address);
+  //       // setBalance is ETH balance
+  //       setBalance(balanceValue ? parseFloat(balanceValue) : 0);
+  //     } else {
+  //       balanceValue = (await getBalanceToken(address, id))?.toString() || "0";
+  //     }
+
+  //     // setBalance is ETH balance
+  //     // setBalance(balanceValue ? parseFloat(balanceValue) : 0);
+  //     setBalanceTokenA(balanceValue ? parseFloat(balanceValue) : 0);
+  //   };
+
+  //   if (user?.wallet?.address) {
+  //     fetchBalances(user?.wallet?.address);
+  //   }
+  // }, [setBalance, id, user?.wallet?.address, tokenA]);
+
+  const handleChange = (e: any, funcSet: any) => {
+    const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+    console.log("sanito ", sanitized);
+    funcSet(sanitized);
+  };
+  const handleChangeUrl = (e: any, funcSet: any) => {
+    const sanitized = e.target.value.replace(
+      /[^-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g,
+      ""
+    );
+    funcSet(sanitized);
+  };
 
   return (
     <div
@@ -70,8 +113,11 @@ export default function CreatePage() {
                       </div>
                     </div>
                     <input
-                      type="text"
                       className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                      type="text"
+                      value={name}
+                      maxLength={16}
+                      onChange={(e) => handleChange(e, setName)}
                     />
                   </div>
                 </div>
@@ -89,6 +135,9 @@ export default function CreatePage() {
                     <input
                       type="text"
                       className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                      value={ticker}
+                      maxLength={16}
+                      onChange={(e) => handleChange(e, setTicker)}
                     />
                   </div>
                 </div>
@@ -106,6 +155,9 @@ export default function CreatePage() {
                     <input
                       type="text"
                       className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                      value={lore}
+                      maxLength={16}
+                      onChange={(e) => handleChange(e, setLore)}
                     />
                   </div>
                 </div>
@@ -129,8 +181,11 @@ export default function CreatePage() {
                     <div className="self-stretch justify-start items-center inline-flex">
                       <textarea
                         rows={3}
+                        maxLength={140}
                         className="grow shrink outline-none basis-0 text-neutral-500 
                        text-sm bg-transparent"
+                        value={description}
+                        onChange={(e) => handleChange(e, setDescription)}
                       >
                         Here you can describe your project token briefly to
                         expand on the context that you consider important. Use
@@ -167,6 +222,8 @@ export default function CreatePage() {
                         type="text"
                         placeholder="www.mywebsite.com"
                         className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                        value={web}
+                        onChange={(e) => handleChangeUrl(e, setWeb)}
                       />
                     </div>
                   </div>
@@ -188,6 +245,8 @@ export default function CreatePage() {
                         type="text"
                         placeholder="@"
                         className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                        value={twitter}
+                        onChange={(e) => handleChangeUrl(e, setTwitter)}
                       />
                     </div>
                   </div>
@@ -209,6 +268,8 @@ export default function CreatePage() {
                         type="text"
                         placeholder="@"
                         className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                        value={telegram}
+                        onChange={(e) => handleChange(e, setTelegram)}
                       />
                     </div>
                   </div>
@@ -230,6 +291,8 @@ export default function CreatePage() {
                         type="text"
                         placeholder=""
                         className="text-neutral-500 bg-transparent w-full outline-none text-base font-normal"
+                        value={discord}
+                        onChange={(e) => handleChangeUrl(e, setDiscord)}
                       />
                     </div>
                   </div>
@@ -339,7 +402,7 @@ export default function CreatePage() {
                 000
               </div>
               <div className="text-neutral-700 text-xs font-normal">
-                $TICKER
+                ${ticker.toUpperCase()}
               </div>
             </div>
           </div>
@@ -350,7 +413,7 @@ export default function CreatePage() {
           <div className="w-[264px] h-12 bg-stone-900 rounded-lg flex-col justify-center items-center gap-2 flex">
             <div className="self-stretch grow shrink basis-0 px-6 py-2.5 justify-center items-center gap-2 inline-flex">
               <div className="text-center text-white text-sm font-medium">
-                Create [Token]
+                Create [{name}]
               </div>
             </div>
           </div>

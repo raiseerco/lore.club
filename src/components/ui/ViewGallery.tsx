@@ -25,14 +25,6 @@ export const ViewGallery = ({ tokensData }: ViewGalleryProps) => {
             />
           );
         })}
-
-        {/* <TokenIcon id={11} />
-        <TokenIcon id={111} />
-        <TokenIcon id={12} />
-        <TokenIcon id={122} />
-        <TokenIcon id={13} />
-        <TokenIcon id={133} />
-        <TokenIcon id={144} /> */}
       </div>
 
       <ActivityBar />

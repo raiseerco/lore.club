@@ -19,6 +19,7 @@ export const TokenIcon = ({ tokenObject }: TokenIconProps) => {
 
     const currPrice = parseFloat(formattedPrice);
     // console.log(".currPrice ", currPrice);
+    // TODO CHECK!
     const circSupply: bigint = (tokenObject.totalSupply as bigint) - 1n; //tokenObject.reserveToken;
 
     console.log(".totalSupply ", parseFloat(formatUnits(circSupply, 18)));
