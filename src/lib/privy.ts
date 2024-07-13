@@ -1605,193 +1605,6 @@ const tokenABI = [
   },
 ] as const;
 
-export const publicClient = createPublicClient({
-  chain: DEFAULT_NETWORK,
-  transport: http(
-    "https://base-sepolia.infura.io/v3/b96017bda544465082cb0d697443f0ee"
-  ),
-});
-
-export const mainnetClient = createPublicClient({
-  chain: mainnet,
-  transport: http(
-    "https://mainnet.infura.io/v3/b96017bda544465082cb0d697443f0ee"
-  ),
-});
-
-export async function getTokensCreated() {
-  try {
-    const result = await publicClient.readContract({
-      address: `0x${
-        process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
-        "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"
-      }`,
-      abi: tokenFactoryABI,
-      functionName: "getTokensCreated",
-      // args: ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']
-    });
-
-    return result;
-    // result.then((r) => {
-    //   r[0].completionFee;
-    // });
-    // const tokens = await contract.read.getTokensCreated();
-
-    // return tokens;
-  } catch (error) {
-    console.error("Error: ", error);
-    throw error;
-  }
-}
-
-export async function getBalanceETH(addr: string) {
-  try {
-    if (!addr) {
-      console.log("Nothing");
-      return null;
-    }
-
-    const balance = await publicClient.getBalance({
-      address: `0x${addr.replace("0x", "")}`,
-      blockTag: "safe",
-    });
-
-    return formatEther(balance);
-  } catch (error) {
-    console.error("Error: ", error);
-    throw error;
-  }
-}
-
-export async function getTokenInfo(tokenAddress: string) {
-  try {
-    if (!tokenAddress) {
-      console.log("Nothing");
-      return null;
-    }
-
-    const addr = tokenAddress.replace("0x", "");
-    const result = await publicClient.readContract({
-      address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
-      abi: tokenFactoryABI,
-      functionName: "getTokenInfo",
-      args: [`0x${addr}`],
-    });
-
-    return result;
-  } catch (error) {
-    console.error("Error: ", error);
-    throw error;
-  }
-}
-// export const walletClient = createWalletClient({
-//   chain: DEFAULT_NETWORK,
-//   transport: custom(window?.ethereum),
-// });
-
-export function getWalletClient() {
-  if (typeof window === "undefined") {
-    return undefined; // Retorna null o maneja de otra manera cuando no está en el cliente
-  }
-
-  return createWalletClient({
-    chain: DEFAULT_NETWORK,
-    transport: custom(window.ethereum),
-  });
-}
-
-export async function getEvents() {
-  const unwatch = await publicClient.watchEvent({
-    address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
-    onLogs: (logs) => console.log("logs ", logs),
-  });
-}
-
-export async function getBlockNumber() {
-  const blockNumber = await publicClient.getBlockNumber();
-  return blockNumber;
-}
-
-export async function calculatePurchaseTokens(
-  tokenAddress: string,
-  _ethAmount: string
-) {
-  try {
-    if (!tokenAddress || !_ethAmount) {
-      console.log("No values to calculate");
-      return null;
-    }
-
-    const ethAmount = parseUnits(_ethAmount, 18);
-
-    const addr = tokenAddress.replace("0x", "");
-    const result = await publicClient.readContract({
-      address: `0x${addr}`,
-      abi: tokenABI,
-      functionName: "calculatePurchaseTokens",
-      args: [BigInt(ethAmount)],
-    });
-
-    return {
-      tokensToPurchase: formatEther(result[0]),
-      feeAmount: result[1],
-      excessETH: result[2],
-    };
-  } catch (error) {
-    console.error("Error: ", error);
-    throw error;
-  }
-}
-
-export async function buyTokens(
-  _tokenAddress: string,
-  _minTokensOut: bigint,
-  _ether: string,
-  _deadline: bigint,
-  _account: string
-) {
-  try {
-    if (!_minTokensOut || !_deadline) {
-      console.log("No values to calculate");
-      return null;
-    }
-
-    console.log("_tokenAddress: ", _tokenAddress);
-    console.log("_minTokensOut: ", _minTokensOut);
-    console.log("_deadline: ", _deadline);
-    console.log("_ether: ", _ether);
-    console.log("_account: ", _account);
-
-    const { request } = await publicClient.simulateContract({
-      account: `0x${_account.replace("0x", "")}`,
-      address: `0x${_tokenAddress.replace("0x", "")}`,
-      abi: tokenABI,
-      functionName: "buyTokens",
-      value: parseEther(_ether),
-      args: [_minTokensOut, _deadline],
-    });
-
-    console.log("🥰🥰🥰🥰 ", request);
-
-    const c = getWalletClient();
-    if (!c) {
-      return;
-    }
-    const hash = await c.writeContract(request);
-    console.log("🥰🥰🥰🥰 hash", hash);
-
-    return {
-      // tokensToPurchase: formatEther(result[0]),
-      // feeAmount: result[1],
-      // excessETH: result[2],
-      hash,
-    };
-  } catch (error) {
-    console.log("😎😎😎 Error: ", error);
-    throw error;
-  }
-}
-
 const ethABI = [
   {
     inputs: [
@@ -2076,13 +1889,196 @@ const ethABI = [
   },
 ] as const;
 
+export const publicClient = createPublicClient({
+  chain: DEFAULT_NETWORK,
+  transport: http(
+    "https://base-sepolia.infura.io/v3/b96017bda544465082cb0d697443f0ee"
+  ),
+});
+
+// TODO Send to server .env
+export const mainnetClient = createPublicClient({
+  chain: mainnet,
+  transport: http(
+    `https://mainnet.infura.io/v3/${process.env.MAINNET_PROJECT}`
+  ),
+});
+
+export async function getTokensCreated() {
+  try {
+    const result = await publicClient.readContract({
+      address: `0x${
+        process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
+        "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"
+      }`,
+      abi: tokenFactoryABI,
+      functionName: "getTokensCreated",
+      // args: ['0xa5cc3c03994DB5b0d9A5eEdD10CabaB0813678AC']
+    });
+
+    return result;
+    // result.then((r) => {
+    //   r[0].completionFee;
+    // });
+    // const tokens = await contract.read.getTokensCreated();
+
+    // return tokens;
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function getBalanceETH(addr: string) {
+  try {
+    if (!addr) {
+      console.log("Nothing");
+      return null;
+    }
+
+    const balance = await publicClient.getBalance({
+      address: `0x${addr.replace("0x", "")}`,
+      blockTag: "safe",
+    });
+
+    return formatEther(balance);
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function getTokenInfo(tokenAddress: string) {
+  try {
+    if (!tokenAddress) {
+      console.log("Nothing");
+      return null;
+    }
+
+    const addr = tokenAddress.replace("0x", "");
+    const result = await publicClient.readContract({
+      address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
+      abi: tokenFactoryABI,
+      functionName: "getTokenInfo",
+      args: [`0x${addr}`],
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+// DEPRECATED
+export async function getEvents() {
+  const unwatch = await publicClient.watchEvent({
+    address: `0x${process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT || ""}`,
+    onLogs: (logs) => console.log("logs ", logs),
+  });
+}
+
+// TODO expose in the UI
+export async function getBlockNumber() {
+  const blockNumber = await publicClient.getBlockNumber();
+  return blockNumber;
+}
+
+export async function calculatePurchaseTokens(
+  tokenAddress: string,
+  _ethAmount: string
+) {
+  try {
+    if (!tokenAddress || !_ethAmount) {
+      console.log("No values to calculate");
+      return null;
+    }
+
+    const ethAmount = parseUnits(_ethAmount, 18);
+
+    const addr = tokenAddress.replace("0x", "");
+    const result = await publicClient.readContract({
+      address: `0x${addr}`,
+      abi: tokenABI,
+      functionName: "calculatePurchaseTokens",
+      args: [BigInt(ethAmount)],
+    });
+
+    return {
+      tokensToPurchase: formatEther(result[0]),
+      feeAmount: result[1],
+      excessETH: result[2],
+    };
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+const getWalletClient = () =>
+  typeof window === "undefined"
+    ? undefined
+    : createWalletClient({
+        chain: DEFAULT_NETWORK,
+        transport: custom(window.ethereum),
+      });
+
+export async function buyTokens(
+  _tokenAddress: string,
+  _minTokensOut: bigint,
+  _ether: string,
+  _deadline: bigint,
+  _account: string
+) {
+  try {
+    if (!_minTokensOut || !_deadline) {
+      console.log("No values to calculate");
+      return null;
+    }
+
+    console.log("_tokenAddress: ", _tokenAddress);
+    console.log("_minTokensOut: ", _minTokensOut);
+    console.log("_deadline: ", _deadline);
+    console.log("_ether: ", _ether);
+    console.log("_account: ", _account);
+
+    const { request } = await publicClient.simulateContract({
+      account: `0x${_account.replace("0x", "")}`,
+      address: `0x${_tokenAddress.replace("0x", "")}`,
+      abi: tokenABI,
+      functionName: "buyTokens",
+      value: parseEther(_ether),
+      args: [_minTokensOut, _deadline],
+    });
+
+    console.log("Buy results: ", request);
+
+    const c = getWalletClient();
+    if (!c) {
+      return;
+    }
+    const hash = await c.writeContract(request);
+    console.log("TX hash", hash);
+
+    return {
+      // tokensToPurchase: formatEther(result[0]),
+      // feeAmount: result[1],
+      // excessETH: result[2],
+      hash,
+    };
+  } catch (error) {
+    console.log("⛔️ Error: ", error);
+    throw error;
+  }
+}
+
 export async function getETHPrice() {
   try {
     const priceFeedABI = [
       "function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80)",
     ];
     const result = await mainnetClient.readContract({
-      address: `0x${"5f4ec3df9cbd43714fe2740f5e3616155c5b8419"}`,
+      address: `0x${"5f4ec3df9cbd43714fe2740f5e3616155c5b8419"}`, // Chainlink oracle
       abi: ethABI, //priceFeedABI,
       functionName: "latestRoundData",
     });
@@ -2096,6 +2092,31 @@ export async function getETHPrice() {
     //  const price = result[1]; // El precio está en la segunda posición del array retornado
 
     return res;
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function getBalanceToken(
+  userAddress: string,
+  tokenAddress: string
+) {
+  try {
+    if (!tokenAddress || !userAddress) {
+      console.log("No values to calculate");
+      return null;
+    }
+
+    const addr = tokenAddress.replace("0x", "");
+    const result = await publicClient.readContract({
+      address: `0x${addr}`,
+      abi: tokenABI,
+      functionName: "balanceOf",
+      args: [`0x${userAddress.replace("0x", "")}`],
+    });
+
+    return result;
   } catch (error) {
     console.error("Error: ", error);
     throw error;

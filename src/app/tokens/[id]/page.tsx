@@ -4,6 +4,7 @@ import {
   buyTokens,
   calculatePurchaseTokens,
   getBalanceETH,
+  getBalanceToken,
   getEvents,
   getTokenInfo,
 } from "@/lib/privy";
@@ -26,45 +27,88 @@ import { useBalance } from "@/components/contexts/BalanceContext";
 import { usePrivy } from "@privy-io/react-auth";
 
 const DEFAULT_DEADLINE_MINS = 10;
+const DEFAULT_TRADING_TOKEN = "ETH";
+
+// const DUMMY_TOKEN_DATA = {
+//   collectedFees: 0n,
+//   completionFee: 400n,
+//   creator: "0x23BF95De9F90338F973056351C8Cd2CB78cbe52f",
+//   currentTokenPrice: 900000000n,
+//   description: "Token Description #2",
+//   image:
+//     "https://gray-lucky-louse-813.mypinata.cloud/ipfs/QmccigNmKpKgqprK31VXXRzYFBsXDw651SNXg5DniuE3HP/2.webp",
+//   initialETHVirtualReserve: 900000000000000000n,
+//   name: "Meme Token #2",
+//   poolAddress: "0x0000000000000000000000000000000000000000",
+//   poolInitialized: false,
+//   presaleActive: true,
+//   reserveETH: 900000000000000000n,
+//   reserveToken: 1000000000000000000000000000n,
+//   targetReserveETH: 4000000000000000000n,
+//   ticker: "MEME2",
+//   tokenAddress: "0xc4c34E84CD5EcB36ca2e7fd51C5f52F87809f6b1",
+//   totalSupply: 1000000000000000000000000000n,
+//   tradingFee: 100n,
+// };
 
 export default function TokenPage({ params }: { params: { id: string } }) {
   const { id } = params;
+  const { balance, setBalance, ethPrice, setEthPrice } = useBalance();
+  const { user } = usePrivy();
+
+  // defaults
+  const [tokenA, setTokenA] = useState(DEFAULT_TRADING_TOKEN);
+  const [balanceTokenA, setBalanceTokenA] = useState(balance);
+  // unset
+  const [tokenB, setTokenB] = useState("No token");
+  const [balanceTokenB, setBalanceTokenB] = useState(0);
+  const [available, setAvailable] = useState("");
 
   const [tokenData, setTokenData] = useState<any>(null);
   const [loadingTx, setLoadingTx] = useState(true);
+  const [operation, setOperation] = useState("buy");
+
   const [isEnough, setIsEnough] = useState(false);
   const [ethAmount, setEthAmount] = useState("");
-  const { balance, setBalance } = useBalance();
-  const { user } = usePrivy();
+  const [amountPayToken, setAmountPayToken] = useState("");
   const [tokensToPurchase, setTokensToPurchase] = useState<
     string | undefined
   >();
 
-  const handleInput = (ethValue: string) => {
-    console.log("ethValue ", ethValue === "");
-    console.log("bouncing, calculating output...", id, ethValue);
+  const handleInput = (enteredValue: string) => {
+    // console.log("someValue ", someValue === "");
+    console.log("bouncing, calculating output...", id, enteredValue);
 
-    if (parseFloat(ethValue) === 0 || balance === 0) {
+    if (parseFloat(enteredValue) === 0 || balanceTokenA === 0) {
       console.log("input zero");
       setTokensToPurchase("0");
+      // setEthAmount("0");
+      setAmountPayToken("0");
       setIsEnough(false);
       return;
     }
 
-    if (balance < parseFloat(ethValue)) {
+    if (balanceTokenA < parseFloat(enteredValue)) {
       setIsEnough(false);
     } else {
       setIsEnough(true);
     }
 
-    setEthAmount(ethValue);
-    return calculatePurchaseTokens(id, ethValue).then((res) => {
+    // setEthAmount(enteredValue);
+    setAmountPayToken(enteredValue);
+    return calculatePurchaseTokens(id, enteredValue).then((res) => {
       console.log("resu: ", res);
       setTokensToPurchase(res?.tokensToPurchase.toString());
     });
   };
 
   const debouncedInputHandler = useDebounce(handleInput, 500);
+
+  // FIXME
+  // useEffect(() => {
+  //   // recalcular
+  //   // limpiar campos
+  // }, [inputAmount]);
 
   // informative functions
   async function fetchTokenTransfers(
@@ -98,31 +142,49 @@ export default function TokenPage({ params }: { params: { id: string } }) {
     if (user?.wallet?.address && tokensToPurchase) {
       console.log("buying: ", tokensToPurchase);
 
-      const deadlineInSeconds =
-        Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_MINS * 60;
+      // buy with eth
+      if (tokenA === "ETH") {
+        const deadlineInSeconds =
+          Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_MINS * 60;
 
-      return buyTokens(
-        id,
-        parseUnits(tokensToPurchase, 9),
-        ethAmount,
-        parseUnits(deadlineInSeconds.toString(), 9),
-        user?.wallet?.address
-      );
+        return buyTokens(
+          id,
+          parseUnits(tokensToPurchase, 9),
+          ethAmount,
+          parseUnits(deadlineInSeconds.toString(), 9),
+          user?.wallet?.address
+        );
+      } else {
+        // TODO es por aca
+        // sell with tokens
+        // sell operation
+      }
     }
   };
 
   useEffect(() => {
-    fetchTokenTransfers("item.tokenAddress", "earliest", "latest")
-      .then((data) => console.log("The data logs! ", data))
-      .catch((error) => console.error(error));
+    if (!id) {
+      return;
+    }
+
+    // setTokenData(DUMMY_TOKEN_DATA);
+    // setTokenB("item.ticker");
+    // setAvailable(
+    //   (DUMMY_TOKEN_DATA.totalSupply - DUMMY_TOKEN_DATA.reserveToken).toString()
+    // );
+
+    // FIXME !!!!!!
 
     getTokenInfo(id).then((item) => {
       if (!item) {
         return;
       }
-      console.log("dataaaa ", item);
+
+      console.log("TokenData ", item);
 
       setTokenData(item);
+      setTokenB(item.ticker);
+
       // load tx
       // getEvents(); deprecated?
 
@@ -132,16 +194,43 @@ export default function TokenPage({ params }: { params: { id: string } }) {
     });
   }, [id]);
 
+  // TODO on each block?
   useEffect(() => {
-    const fetchBalance = async (address: string) => {
-      const balanceValue = await getBalanceETH(address);
-      setBalance(balanceValue ? parseFloat(balanceValue) : 0);
+    const fetchBalances = async (address: string) => {
+      let balanceValue: string | null;
+      if (tokenA === "ETH") {
+        balanceValue = await getBalanceETH(address);
+        // setBalance is ETH balance
+        setBalance(balanceValue ? parseFloat(balanceValue) : 0);
+      } else {
+        balanceValue = (await getBalanceToken(address, id))?.toString() || "0";
+      }
+
+      // setBalance is ETH balance
+      // setBalance(balanceValue ? parseFloat(balanceValue) : 0);
+      setBalanceTokenA(balanceValue ? parseFloat(balanceValue) : 0);
     };
 
     if (user?.wallet?.address) {
-      fetchBalance(user?.wallet?.address);
+      fetchBalances(user?.wallet?.address);
     }
-  }, [setBalance, user?.wallet?.address]);
+  }, [setBalance, id, user?.wallet?.address, tokenA]);
+
+  // switch operation handling
+
+  useEffect(() => {
+    // recalcular
+    // limpiar campos
+  }, [operation]);
+
+  // FIXME
+  const handleOperation = () => {
+    operation === "buy" ? setOperation("sell") : setOperation("buy");
+    setEthAmount("0");
+    setTokensToPurchase("0");
+    setIsEnough(false);
+    console.log("operation: ", operation);
+  };
 
   interface Transaction {
     time: Date;
@@ -205,7 +294,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
     <div className="mt-28 mx-4 flex w-full justify-center">
       {tokenData ? (
         <div>
-          <Breadcrumb network="selected!" id={id} />
+          <Breadcrumb network="selected!" id={id} available={available} />
           <div className="flex flex-col lg:flex-row lg:gap-4">
             {/* left side  */}
             <div className="lg:w-2/3 mb-6 w-full">
@@ -330,97 +419,85 @@ export default function TokenPage({ params }: { params: { id: string } }) {
 
                   <div className="w-full relative flex flex-col gap-2">
                     <div
-                      className="w-full h-[88px] p-4 bg-white
+                      className="w-full h-[110px] p-3 bg-white
                       dark:bg-stone-600 
                       dark:border-stone-500 
                       border-stone-300 
                       rounded-2xl border
-                       flex justify-between items-center"
+                        justify-between items-center"
                     >
-                      <div className="flex flex-col justify-center items-start gap-0.5">
-                        <div className="flex justify-center items-center">
-                          <input
-                            placeholder="0.00"
-                            type="text"
-                            onChange={(e) => {
-                              const sanitized = e.target.value.replace(
-                                /,/g,
-                                "."
-                              );
-                              e.target.value = /^[0-9]*\.?[0-9]*$/.test(
-                                sanitized
-                              )
-                                ? sanitized
-                                : sanitized.slice(0, -1);
-                              if (e.target.value === "") {
-                                return;
-                              }
+                      <input
+                        placeholder="0"
+                        type="text"
+                        // value={inputValue}
+                        onChange={(e) => {
+                          const sanitized = e.target.value.replace(/,/g, ".");
 
-                              debouncedInputHandler(e.target.value);
-                            }}
-                            //   onChange={(
-                            //     e: React.ChangeEvent<HTMLInputElement>
-                            //   ) => {
-                            //     const sanitized = e.target.value.replace(
-                            //       /,/g,
-                            //       "."
-                            //     );
-                            //     e.target.value = /^[0-9]*\.?[0-9]*$/.test(
-                            //       sanitized
-                            //     )
-                            //       ? sanitized
-                            //       : sanitized.slice(0, -1);
-                            //   }
-                            // }
-                            className="w-full bg-transparent
+                          e.target.value = /^[0-9]*\.?[0-9]*$/.test(sanitized)
+                            ? sanitized
+                            : sanitized.slice(0, -1);
+
+                          // setInputValue(sanitized);
+
+                          if (e.target.value === "") {
+                            return;
+                          }
+
+                          debouncedInputHandler(e.target.value);
+                        }}
+                        className="w-full bg-transparent
                               placeholder-stone-300
                               outline-none 
                               text-black
                               dark:text-stone-200
                               text-2xl"
-                          />
-                        </div>
-                        <div className="flex flex-col justify-start items-start gap-px">
-                          <div className="text-neutral-700 text-xs font-medium">
-                            You pay
+                      />
+
+                      <div className="flex bg-resd-600 mb-8 justify-between items-center gap-0.5">
+                        <div className="flex-col">
+                          <p className="text-neutral-400 text-xs font-medium">
+                            $122.22
+                          </p>
+                          <div className="flex mt-1 text-neutral-400 text-xs font-medium">
+                            <span>Balance {balanceTokenA} </span>
+                            <button className="ml-1 font-bold text-neutral-300 italic">
+                              Max
+                            </button>
                           </div>
-                          <div className="text-neutral-700 text-xs font-medium">
-                            $0.00
-                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col justify-center items-end gap-2.5">
-                        <div
-                          className="px-1.5 py-1   rounded-full border
+
+                        <div className="flex flex-col justify-center items-end gap-2.5">
+                          <div
+                            className="px-1.5 py-1   rounded-full border
                          border-stone-300
                          dark:border-stone-400
-                         
                          flex justify-end items-center gap-1"
-                        >
-                          <div
-                            className="bg-stone-50
+                          >
+                            <div
+                              className="bg-stone-50
                           rounded-full border
                           border-stone-300 
                           flex justify-center items-center"
-                          >
-                            <img
-                              className=" rounded-full border
+                            >
+                              <img
+                                className=" rounded-full border
                                border-stone-400"
-                              src="https://via.placeholder.com/26x26"
-                            />
-                          </div>
-                          <div
-                            className="text-center text-neutral-700
+                                src="https://via.placeholder.com/26x26"
+                              />
+                            </div>
+                            <div
+                              className="text-center text-neutral-700
                           dark:text-neutral-200
                           text-sm font-normal"
-                          >
-                            ETH
+                            >
+                              {operation === "buy" ? tokenA : tokenB}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div
-                      className="w-full h-[88px] p-4 bg-white 
+                      className="w-full h-[110px] p-4 bg-white 
                     dark:bg-stone-600 
                       dark:border-stone-500 
                      rounded-2xl border border-stone-300 flex justify-between items-center"
@@ -431,7 +508,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                             0.00
                           </div> */}
 
-                          <input
+                          {/* <input
                             placeholder="0.00"
                             type="text"
                             defaultValue={tokensToPurchase}
@@ -451,27 +528,24 @@ export default function TokenPage({ params }: { params: { id: string } }) {
 
                               debouncedInputHandler(e.target.value);
                             }}
-                            //   onChange={(
-                            //     e: React.ChangeEvent<HTMLInputElement>
-                            //   ) => {
-                            //     const sanitized = e.target.value.replace(
-                            //       /,/g,
-                            //       "."
-                            //     );
-                            //     e.target.value = /^[0-9]*\.?[0-9]*$/.test(
-                            //       sanitized
-                            //     )
-                            //       ? sanitized
-                            //       : sanitized.slice(0, -1);
-                            //   }
-                            // }
                             className="w-full bg-transparent
                               placeholder-stone-300
                               outline-none 
                               text-black
                               dark:text-stone-200
                               text-2xl"
-                          />
+                          /> */}
+
+                          <span
+                            className="w-full bg-transparent shrink
+                              placeholder-stone-300
+                              outline-none 
+                              text-black
+                              dark:text-stone-200
+                              text-2xl"
+                          >
+                            {tokensToPurchase || 0}
+                          </span>
                         </div>
                         <div className="flex flex-col justify-start items-start gap-px">
                           <div className="text-neutral-700 text-xs font-medium">
@@ -498,7 +572,10 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                           dark:text-neutral-200
                           text-sm font-normal"
                           >
-                            {tokenData.ticker}
+                            {/* {tokenData.ticker} */}
+
+                            {/* {operation === "sell" ? "ETH" : tokenData.ticker} */}
+                            {operation === "sell" ? tokenA : tokenB}
                           </div>
                         </div>
                       </div>
@@ -506,9 +583,9 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                     <button
                       className="absolute top-[50%] left-[50%]
            transform -translate-x-1/2 -translate-y-1/2 w-[38.29px] 
-           h-[38.29px] bg-white rounded-full border-2
+           h-[38.29px] bg-stone-100 rounded-full border-2 outline-none
             border-stone-300 flex justify-center items-center"
-                      onClick={() => console.log("ready")}
+                      onClick={handleOperation}
                     >
                       <svg
                         width="40"
@@ -552,7 +629,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
               </div>
 
               {/* token information  */}
-              <div className="shadow bg-white dark:bg-stone-900 rounded-br-3xl rounded-bl-3xl">
+              <div className="shadow bg-white dark:bg-neutral-800 pb-6 rounded-br-3xl rounded-bl-3xl">
                 <div className="border-b dark:border-b-stone-700 dark:text-neutral-400 py-2 px-4">
                   Information
                 </div>
@@ -661,7 +738,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                 </div>
 
                 {/* top holders  */}
-                <div className="border-y dark:border-y-stone-700  py-2 px-4">
+                <div className="border-y dark:border-y-stone-700 py-2 px-4">
                   Token Holders
                 </div>
                 {/* TODO get the array from the graph */}

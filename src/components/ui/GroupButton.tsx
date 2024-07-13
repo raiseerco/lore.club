@@ -21,27 +21,27 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ onToggle }) => {
     <div
       style={{
         padding: "3px",
-
         boxShadow:
           "var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow), --tw-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.2), --tw-shadow-colored: inset 0 2px 4px 0 var(--tw-shadow-color)",
       }}
-      className="flex bg-stone-300 rounded-lg  m-1"
+      className="flex bg-stone-300 dark:bg-stone-600 rounded-lg m-1"
     >
       <button
         className={`px-3 py-2  rounded ${
           selected === "left"
-            ? "bg-zinc-100 text-black"
-            : "bg-stone-300 text-white"
+            ? "bg-stone-100 text-black dark:bg-stone-300  "
+            : "bg-stone-300 text-white dark:bg-stone-600  "
         }`}
         onClick={() => handleToggle("left")}
       >
         <StyledIcon Icon={LayoutGridIcon} />
       </button>
+
       <button
         className={`px-3 py-2 rounded ${
           selected === "right"
-            ? "bg-zinc-100 text-black"
-            : "bg-stone-300 text-white"
+            ? "bg-stone-100 text-black dark:bg-stone-300  "
+            : "bg-stone-300 text-white dark:bg-stone-600  "
         }`}
         onClick={() => handleToggle("right")}
       >
