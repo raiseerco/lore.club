@@ -1,21 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import Profile from "../Profile";
 import { shortAddress } from "@/lib/utils";
+import { useBalance } from "../contexts/BalanceContext";
 import { usePrivy } from "@privy-io/react-auth";
-import { useState } from "react";
 
 export const LoginButton = () => {
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const { ready, authenticated, login, user } = usePrivy();
   const [showMenu, setShowMenu] = useState(false);
   // Disable login when Privy is not ready or the user is already authenticated
   const disableLogin = !ready || (ready && authenticated);
+  const { isConnected, setIsConnected } = useBalance();
+  const handleClick = () => setShowMenu(!showMenu);
 
-  const handleClick = () => {
-    setShowMenu(!showMenu);
-    console.log("click ", showMenu);
-  };
+  useEffect(() => {
+    setIsConnected(authenticated);
+  }, [setIsConnected, authenticated]);
 
   return authenticated ? (
     <div className="grid relative">
