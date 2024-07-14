@@ -5,6 +5,8 @@ interface BalanceContextType {
   setBalance: (newBalance: number) => void;
   ethPrice: number;
   setEthPrice: (newEthPrice: number) => void;
+  isConnected: boolean;
+  setIsConnected: (newStatus: boolean) => void;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
@@ -14,12 +16,16 @@ export const BalanceProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [balance, setBalance] = useState<number>(0);
   const [ethPrice, setEthPrice] = useState<number>(0);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   const handleSetBalance = (newBalance: number) => {
     setBalance(newBalance);
   };
   const handleSetEthPrice = (newEthPrice: number) => {
     setEthPrice(newEthPrice);
+  };
+  const handleConnection = (newStatus: boolean) => {
+    setIsConnected(newStatus);
   };
 
   return (
@@ -29,6 +35,8 @@ export const BalanceProvider: React.FC<{ children: ReactNode }> = ({
         setBalance: handleSetBalance,
         ethPrice,
         setEthPrice: handleSetEthPrice,
+        isConnected,
+        setIsConnected: handleConnection,
       }}
     >
       {children}

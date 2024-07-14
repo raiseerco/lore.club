@@ -1,4 +1,9 @@
-import { baseSepolia, mainnet } from "viem/chains";
+import {
+  arbitrumSepolia,
+  baseSepolia,
+  mainnet,
+  scrollSepolia,
+} from "viem/chains";
 import {
   createPublicClient,
   createWalletClient,
@@ -12,7 +17,7 @@ import {
 import { formatNumber } from "./utils";
 import { parseUnits } from "viem";
 
-const DEFAULT_NETWORK = baseSepolia;
+const DEFAULT_NETWORK = scrollSepolia; // arbitrumSepolia; // baseSepolia;
 
 // import { createWalletClient } from 'viem'
 
@@ -1891,25 +1896,35 @@ const ethABI = [
 
 export const publicClient = createPublicClient({
   chain: DEFAULT_NETWORK,
-  transport: http(
-    "https://base-sepolia.infura.io/v3/b96017bda544465082cb0d697443f0ee"
-  ),
+  transport: http("https://scroll-sepolia.drpc.org"),
+  // "https://base-sepolia.infura.io/v3/b96017bda544465082cb0d697443f0ee"
 });
 
 // TODO Send to server .env
 export const mainnetClient = createPublicClient({
   chain: mainnet,
   transport: http(
-    `https://mainnet.infura.io/v3/${process.env.MAINNET_PROJECT}`
+    "https://mainnet.infura.io/v3/b96017bda544465082cb0d697443f0ee"
   ),
 });
+
+const FACTORY_ARBITRUM_TESTNET = "3Bb3A3063DAfB15Bd3fF298DCC69564Db44D4D5B"; // DEPLOYED - TEST
+const FACTORY_BASE_TESTNET = "0x297230aa5A9e6Ba168dDc3dac7726D762Ea9B262"; // OK
+const FACTORY_BASE_TESTNET_oold = "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"; // OK
+//base-sepolia-rpc.publicnode.com
+
+const FACTORY_SCROLL_TESTNET = "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"; // OK
+const FACTORY_MODE_TESTNET = "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"; // UNDEPLOYED - TEST
+const FACTORY_POLYGON_TESTNET = "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"; // UNDEPLOYED - TEST
+const FACTORY_OPTIMISM_TESTNET = "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"; // UNDEPLOYED - TEST
 
 export async function getTokensCreated() {
   try {
     const result = await publicClient.readContract({
       address: `0x${
         process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
-        "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"
+        "Ef29EE1a0E08Dfea72FbD49EBB7C07cD75184719"
+        // "3Bb3A3063DAfB15Bd3fF298DCC69564Db44D4D5B"
       }`,
       abi: tokenFactoryABI,
       functionName: "getTokensCreated",
@@ -1917,12 +1932,6 @@ export async function getTokensCreated() {
     });
 
     return result;
-    // result.then((r) => {
-    //   r[0].completionFee;
-    // });
-    // const tokens = await contract.read.getTokensCreated();
-
-    // return tokens;
   } catch (error) {
     console.error("Error: ", error);
     throw error;
@@ -1938,7 +1947,7 @@ export async function getBalanceETH(addr: string) {
 
     const balance = await publicClient.getBalance({
       address: `0x${addr.replace("0x", "")}`,
-      blockTag: "safe",
+      // blockTag: "safe",
     });
 
     return formatEther(balance);
@@ -1986,15 +1995,15 @@ export async function getBlockNumber() {
 
 export async function calculatePurchaseTokens(
   tokenAddress: string,
-  _ethAmount: string
+  _amount: string
 ) {
   try {
-    if (!tokenAddress || !_ethAmount) {
+    if (!tokenAddress || !_amount) {
       console.log("No values to calculate");
       return null;
     }
 
-    const ethAmount = parseUnits(_ethAmount, 18);
+    const ethAmount = parseUnits(_amount, 18);
 
     const addr = tokenAddress.replace("0x", "");
     const result = await publicClient.readContract({
@@ -2008,6 +2017,34 @@ export async function calculatePurchaseTokens(
       tokensToPurchase: formatEther(result[0]),
       feeAmount: result[1],
       excessETH: result[2],
+    };
+  } catch (error) {
+    console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function calculateSaleTokens(
+  _tokenAmount: string,
+  _tokenAddress: string
+) {
+  try {
+    if (!_tokenAmount || parseFloat(_tokenAmount) === 0) {
+      console.log("No values to calculate");
+      return null;
+    }
+
+    const addr = _tokenAddress.replace("0x", "");
+    const result = await publicClient.readContract({
+      address: `0x${addr}`,
+      abi: tokenABI,
+      functionName: "calculateSaleTokens",
+      args: [parseUnits(_tokenAmount, 9)],
+    });
+
+    return {
+      netFee: result[0], // BUG bad calculation that comes from the contract
+      ethFee: result[0],
     };
   } catch (error) {
     console.error("Error: ", error);
@@ -2061,9 +2098,6 @@ export async function buyTokens(
     console.log("TX hash", hash);
 
     return {
-      // tokensToPurchase: formatEther(result[0]),
-      // feeAmount: result[1],
-      // excessETH: result[2],
       hash,
     };
   } catch (error) {
@@ -2119,6 +2153,62 @@ export async function getBalanceToken(
     return result;
   } catch (error) {
     console.error("Error: ", error);
+    throw error;
+  }
+}
+
+export async function createToken(
+  _name: string,
+  _ticker: string,
+  _description: string,
+  _image: string,
+  _userAddress: string
+) {
+  try {
+    if (!_name || !_ticker || !_userAddress) {
+      console.log("No params provided");
+      return null;
+    }
+
+    console.log("_name: ", _name);
+    console.log("_ticker: ", _ticker);
+    console.log("_description: ", _description);
+    console.log("_image: ", _image);
+    console.log("_userAddress: ", _userAddress);
+
+    const { request } = await publicClient.simulateContract({
+      address: `0x${
+        process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
+        "3Bb3A3063DAfB15Bd3fF298DCC69564Db44D4D5B"
+      }`,
+
+      account: `0x${_userAddress.replace("0x", "")}`,
+      abi: tokenFactoryABI,
+      functionName: "createToken",
+      args: [
+        {
+          name: _name,
+          ticker: _ticker,
+          description: _description,
+          image: _image,
+        },
+      ],
+    });
+
+    console.log("create results: ", request);
+
+    const c = getWalletClient();
+    if (!c) {
+      return;
+    }
+    const hash = await c.writeContract(request);
+    console.log("TX hash", hash);
+
+    return {
+      hash,
+    };
+  } catch (error) {
+    console.log("⛔️ Error: ", error);
     throw error;
   }
 }

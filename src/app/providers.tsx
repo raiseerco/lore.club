@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  arbitrumSepolia,
+  baseSepolia,
+  mainnet,
+  modeTestnet,
+  morphSepolia,
+  scrollSepolia,
+} from "viem/chains";
+
 import { PrivyProvider } from "@privy-io/react-auth";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -12,10 +21,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           accentColor: "#676FFF",
           //   logo: "http://localhost:3000/favicon.ico",
         },
-        // Create embedded wallets for users who don't have a wallet
         embeddedWallets: {
           createOnLogin: "users-without-wallets",
         },
+        defaultChain: baseSepolia,
+        supportedChains: [
+          arbitrumSepolia,
+          baseSepolia,
+          mainnet,
+          modeTestnet,
+          morphSepolia,
+          scrollSepolia,
+        ],
       }}
     >
       {children}

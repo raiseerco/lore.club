@@ -1,19 +1,27 @@
 "use client";
 
-import { getBlockNumber, getTokensCreated } from "@/lib/privy";
+import { createToken, getBlockNumber, getTokensCreated } from "@/lib/privy";
 import { useEffect, useState } from "react";
+
+import { ethers } from "ethers";
+import { usePrivy } from "@privy-io/react-auth";
 
 export default function CreatePage() {
   const [block, setBlock] = useState<bigint>();
   const [name, setName] = useState("");
   const [ticker, setTicker] = useState("");
   const [lore, setLore] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(
+    "Here you can describe your project token briefly to expand on the context that you consider important. Use it wisely..."
+  );
   const [web, setWeb] = useState("");
   const [twitter, setTwitter] = useState("");
   const [telegram, setTelegram] = useState("");
   const [discord, setDiscord] = useState("");
   const [picture, setPicture] = useState("");
+  const { authenticated } = usePrivy();
+  const [complete, setComplete] = useState<boolean>(false);
+  const { user } = usePrivy();
 
   // useEffect(() => {
   //   const fetchBalances = async (address: string) => {
@@ -39,8 +47,34 @@ export default function CreatePage() {
   const handleChange = (e: any, funcSet: any) => {
     const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "");
     console.log("sanito ", sanitized);
+
     funcSet(sanitized);
   };
+
+  const handleCreation = () => {
+    if (user?.wallet?.address && name) {
+      console.log("creating: ", name);
+
+      // buy with eth
+      // if (tokenA === "ETH") {
+      //   const deadlineInSeconds =
+      //     Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_MINS * 60;
+
+      return createToken(
+        name,
+        ticker,
+        description,
+        picture,
+        user?.wallet?.address
+      );
+      // } else {
+      //   // TODO es por aca
+      //   // sell with tokens
+      //   // sell operation
+      // }
+    }
+  };
+
   const handleChangeUrl = (e: any, funcSet: any) => {
     const sanitized = e.target.value.replace(
       /[^-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g,
@@ -60,43 +94,6 @@ export default function CreatePage() {
         className="p-2.5 bg-stone-50 rounded-3xl 
       shadow flex-col justify-start items-start gap-2.5 inline-flex"
       >
-        {/* network selector  */}
-        <div className="p-4 bg-zinc-100 rounded-2xl flex-col justify-start items-start gap-3 flex">
-          <div className="w-[472px] h-3.5 text-neutral-700 text-sm font-semibold">
-            Network
-            {block?.toString()}
-          </div>
-          <div className="w-[216px] h-10 justify-center items-start inline-flex">
-            <div className="grow shrink basis-0 self-stretch bg-stone-400 rounded-tl-[100px] rounded-bl-[100px] shadow-inner flex-col justify-center items-center gap-2 inline-flex">
-              <div className="self-stretch grow shrink basis-0 px-3 py-2.5 justify-center items-center gap-2 inline-flex">
-                <div className="bg-stone-50 rounded-[100px] border border-stone-300 justify-start items-center flex">
-                  <img
-                    className="w-6 h-6 rounded-[14px] border border-stone-400"
-                    src="https://via.placeholder.com/24x24"
-                  />
-                </div>
-                <div className="text-center text-white text-sm font-medium">
-                  Base
-                </div>
-                <div className="w-[18px] h-[18px] relative" />
-              </div>
-            </div>
-            <div className="grow shrink basis-0 self-stretch bg-white rounded-tr-[100px] rounded-br-[100px] border border-stone-400 flex-col justify-center items-center gap-2.5 inline-flex">
-              <div className="self-stretch grow shrink basis-0 px-3 py-2.5 justify-center items-center gap-2 inline-flex">
-                <div className="w-6 h-6 bg-stone-50 rounded-[100px] border border-stone-300 justify-start items-center flex">
-                  <img
-                    className="w-6 h-6 rounded-[14px] border border-stone-400"
-                    src="https://via.placeholder.com/24x24"
-                  />
-                </div>
-                <div className="text-center text-black/opacity-20 text-sm font-medium">
-                  Mode
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* information inputs */}
         <div className="p-4 bg-zinc-100 rounded-2xl flex-col justify-start items-start gap-4 flex">
           <div className="text-neutral-700 text-sm font-semibold">
@@ -181,16 +178,12 @@ export default function CreatePage() {
                     <div className="self-stretch justify-start items-center inline-flex">
                       <textarea
                         rows={3}
-                        maxLength={140}
+                        maxLength={100}
                         className="grow shrink outline-none basis-0 text-neutral-500 
                        text-sm bg-transparent"
                         value={description}
                         onChange={(e) => handleChange(e, setDescription)}
-                      >
-                        Here you can describe your project token briefly to
-                        expand on the context that you consider important. Use
-                        it wisely :)
-                      </textarea>
+                      ></textarea>
                     </div>
                   </div>
                 </div>
@@ -410,13 +403,25 @@ export default function CreatePage() {
             Here you can describe your project token briefly to expand on the
             context that you consider important. Use it wisely :)
           </div>
+
           <div className="w-[264px] h-12 bg-stone-900 rounded-lg flex-col justify-center items-center gap-2 flex">
             <div className="self-stretch grow shrink basis-0 px-6 py-2.5 justify-center items-center gap-2 inline-flex">
-              <div className="text-center text-white text-sm font-medium">
-                Create [{name}]
-              </div>
+              {authenticated &&
+              ticker.length > 2 &&
+              name.length > 5 &&
+              description.length > 5 ? (
+                <button
+                  className="text-center text-white text-sm font-medium"
+                  onClick={handleCreation}
+                >
+                  Create [{name}]
+                </button>
+              ) : (
+                <span className="text-white">...</span>
+              )}
             </div>
           </div>
+
           <div className="flex-col justify-start items-start gap-px flex">
             <div className="justify-start items-start gap-7 inline-flex">
               <div className="w-[117.49px] text-neutral-700 text-xs font-medium">

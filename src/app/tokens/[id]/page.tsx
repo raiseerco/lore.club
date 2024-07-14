@@ -3,6 +3,7 @@
 import {
   buyTokens,
   calculatePurchaseTokens,
+  calculateSaleTokens,
   getBalanceETH,
   getBalanceToken,
   getEvents,
@@ -29,39 +30,17 @@ import { usePrivy } from "@privy-io/react-auth";
 const DEFAULT_DEADLINE_MINS = 10;
 const DEFAULT_TRADING_TOKEN = "ETH";
 
-// const DUMMY_TOKEN_DATA = {
-//   collectedFees: 0n,
-//   completionFee: 400n,
-//   creator: "0x23BF95De9F90338F973056351C8Cd2CB78cbe52f",
-//   currentTokenPrice: 900000000n,
-//   description: "Token Description #2",
-//   image:
-//     "https://gray-lucky-louse-813.mypinata.cloud/ipfs/QmccigNmKpKgqprK31VXXRzYFBsXDw651SNXg5DniuE3HP/2.webp",
-//   initialETHVirtualReserve: 900000000000000000n,
-//   name: "Meme Token #2",
-//   poolAddress: "0x0000000000000000000000000000000000000000",
-//   poolInitialized: false,
-//   presaleActive: true,
-//   reserveETH: 900000000000000000n,
-//   reserveToken: 1000000000000000000000000000n,
-//   targetReserveETH: 4000000000000000000n,
-//   ticker: "MEME2",
-//   tokenAddress: "0xc4c34E84CD5EcB36ca2e7fd51C5f52F87809f6b1",
-//   totalSupply: 1000000000000000000000000000n,
-//   tradingFee: 100n,
-// };
-
 export default function TokenPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const { balance, setBalance, ethPrice, setEthPrice } = useBalance();
   const { user } = usePrivy();
 
   // defaults
-  const [tokenA, setTokenA] = useState(DEFAULT_TRADING_TOKEN);
-  const [balanceTokenA, setBalanceTokenA] = useState(balance);
+  const [firstToken, setFirstToken] = useState(DEFAULT_TRADING_TOKEN);
+  const [balanceETH, setBalanceTokenETH] = useState(balance);
   // unset
   const [tokenB, setTokenB] = useState("No token");
-  const [balanceTokenB, setBalanceTokenB] = useState(0);
+  const [balanceToken, setBalanceToken] = useState(0);
   const [available, setAvailable] = useState("");
 
   const [tokenData, setTokenData] = useState<any>(null);
@@ -70,36 +49,68 @@ export default function TokenPage({ params }: { params: { id: string } }) {
 
   const [isEnough, setIsEnough] = useState(false);
   const [ethAmount, setEthAmount] = useState("");
-  const [amountPayToken, setAmountPayToken] = useState("");
+  const [tokenAmount, setTokenAmount] = useState("");
   const [tokensToPurchase, setTokensToPurchase] = useState<
     string | undefined
   >();
 
   const handleInput = (enteredValue: string) => {
     // console.log("someValue ", someValue === "");
-    console.log("bouncing, calculating output...", id, enteredValue);
 
-    if (parseFloat(enteredValue) === 0 || balanceTokenA === 0) {
-      console.log("input zero");
-      setTokensToPurchase("0");
-      // setEthAmount("0");
-      setAmountPayToken("0");
-      setIsEnough(false);
-      return;
-    }
+    if (firstToken === "ETH") {
+      // if (operation === "buy") {
+      console.log("bouncing, calculating output...", id, enteredValue);
 
-    if (balanceTokenA < parseFloat(enteredValue)) {
-      setIsEnough(false);
+      if (parseFloat(enteredValue) === 0 || balanceETH === 0) {
+        console.log("input of ETH is zero");
+        setTokensToPurchase("0");
+        setEthAmount("0");
+        setTokenAmount("0");
+        setIsEnough(false);
+        return;
+      }
+      if (balanceETH < parseFloat(enteredValue)) {
+        setIsEnough(false);
+      } else {
+        setIsEnough(true);
+      }
+
+      setEthAmount(enteredValue);
+      // setTokenAmount(enteredValue);
+      return calculatePurchaseTokens(id, enteredValue).then((res) => {
+        console.log("resu: ", res);
+        setTokensToPurchase(res?.tokensToPurchase.toString());
+      });
     } else {
-      setIsEnough(true);
-    }
+      // vending tokens calculation
+      console.log("bouncing, calculating output...", id, enteredValue);
 
-    // setEthAmount(enteredValue);
-    setAmountPayToken(enteredValue);
-    return calculatePurchaseTokens(id, enteredValue).then((res) => {
-      console.log("resu: ", res);
-      setTokensToPurchase(res?.tokensToPurchase.toString());
-    });
+      if (
+        parseFloat(enteredValue) === 0
+        // || balanceToken === 0
+      ) {
+        console.log("input of Token is zero");
+        setTokensToPurchase("0");
+        setEthAmount("0");
+        setTokenAmount("0");
+        setIsEnough(false);
+        return;
+      }
+      if (parseFloat(enteredValue) > balanceToken) {
+        setIsEnough(false);
+      } else {
+        setIsEnough(true);
+      }
+
+      setTokenAmount(enteredValue);
+
+      return calculateSaleTokens(enteredValue, id).then((res) => {
+        console.log("resu de venta tokens por eth: ", res);
+
+        console.log("🏆🏆🏆🏆");
+        // setTokensToPurchase(res?.tokensToPurchase.toString());
+      });
+    }
   };
 
   const debouncedInputHandler = useDebounce(handleInput, 500);
@@ -142,10 +153,14 @@ export default function TokenPage({ params }: { params: { id: string } }) {
     if (user?.wallet?.address && tokensToPurchase) {
       console.log("buying: ", tokensToPurchase);
 
-      // buy with eth
-      if (tokenA === "ETH") {
-        const deadlineInSeconds =
-          Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_MINS * 60;
+      console.log("😎😎😎 ethAmount ", ethAmount);
+
+      const deadlineInSeconds =
+        Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_MINS * 60;
+
+      // if (firstToken === "ETH") {
+      if (operation === "buy") {
+        // BUT WITH ETH
 
         return buyTokens(
           id,
@@ -155,9 +170,8 @@ export default function TokenPage({ params }: { params: { id: string } }) {
           user?.wallet?.address
         );
       } else {
+        // vending TOKEN FOR ETH
         // TODO es por aca
-        // sell with tokens
-        // sell operation
       }
     }
   };
@@ -198,7 +212,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchBalances = async (address: string) => {
       let balanceValue: string | null;
-      if (tokenA === "ETH") {
+      if (firstToken === "ETH") {
         balanceValue = await getBalanceETH(address);
         // setBalance is ETH balance
         setBalance(balanceValue ? parseFloat(balanceValue) : 0);
@@ -208,13 +222,13 @@ export default function TokenPage({ params }: { params: { id: string } }) {
 
       // setBalance is ETH balance
       // setBalance(balanceValue ? parseFloat(balanceValue) : 0);
-      setBalanceTokenA(balanceValue ? parseFloat(balanceValue) : 0);
+      setBalanceTokenETH(balanceValue ? parseFloat(balanceValue) : 0);
     };
 
     if (user?.wallet?.address) {
       fetchBalances(user?.wallet?.address);
     }
-  }, [setBalance, id, user?.wallet?.address, tokenA]);
+  }, [setBalance, id, user?.wallet?.address, firstToken]);
 
   // switch operation handling
 
@@ -225,10 +239,18 @@ export default function TokenPage({ params }: { params: { id: string } }) {
 
   // FIXME
   const handleOperation = () => {
-    operation === "buy" ? setOperation("sell") : setOperation("buy");
-    setEthAmount("0");
-    setTokensToPurchase("0");
+    if (operation === "buy") {
+      setOperation("sell");
+      setFirstToken("tokenB");
+      setEthAmount("0");
+    } else {
+      setOperation("buy");
+      setFirstToken("ETH");
+      setTokensToPurchase("0");
+    }
+
     setIsEnough(false);
+    // recalculate
     console.log("operation: ", operation);
   };
 
@@ -339,18 +361,18 @@ export default function TokenPage({ params }: { params: { id: string } }) {
 
                 <div className="flex text-sm">
                   {/* FIXME */}
-                  <p className=" text-green-500 bg-amber-700">
+                  <p className=" text-green-500 bg-zinc-700">
                     {/* {tokenDummy.variation}% */}
                   </p>
-                  <p className="ml-3 text-gray-500  bg-amber-700">
+                  <p className="ml-3 text-gray-500  bg-zinc-700">
                     {/* {tokenDummy.volume24h} */}
                   </p>
                 </div>
               </div>
               {/* chart  */}
-              <div className="mb-3">chart</div>
+              <div className="mb-3">Chart soon™</div>
               {/* FIXME market indicators */}
-              <div className="mb-3 flex gap-6 bg-amber-700">
+              <div className="mb-3 flex gap-6 bg-zinc-100">
                 <div>
                   <p className="text-2xl">
                     {/* ${formatNumber(tokenDummy.liquidity)} */}
@@ -383,29 +405,9 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                   className="p-2.5 bg-stone-100 dark:bg-stone-700 
                  rounded-2xl flex-col justify-center items-start gap-2 inline-flex w-full max-w-md mx-auto"
                 >
-                  {/* buy-sell buttons */}
+                  {/* buy-purch buttons */}
                   <div className="w-full h-7 relative flex justify-between items-center">
-                    <div className="flex gap-2">
-                      <button
-                        className="w-[47px] h-[25px] px-[11px] py-1 bg-stone-50
-                        dark:bg-stone-400 
-                       rounded-full border border-stone-300 flex justify-center items-center"
-                      >
-                        <span className="text-center text-neutral-700 text-sm font-semibold">
-                          Buy
-                        </span>
-                      </button>
-                      <div
-                        className="w-[46px] h-[25px] px-[11px] py-1 rounded-full border
-                        border-stone-300 dark:border-stone-500 
-                        
-                        flex justify-center items-center"
-                      >
-                        <div className="text-center text-neutral-600 text-sm font-medium">
-                          Sell
-                        </div>
-                      </div>
-                    </div>
+                    <div className="flex gap-2"></div>
                     <button
                       className="w-7 h-7 p-1.5 rounded-full border
                        border-stone-300 flex justify-center items-center"
@@ -459,7 +461,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                             $122.22
                           </p>
                           <div className="flex mt-1 text-neutral-400 text-xs font-medium">
-                            <span>Balance {balanceTokenA} </span>
+                            <span>Balance {balanceETH} </span>
                             <button className="ml-1 font-bold text-neutral-300 italic">
                               Max
                             </button>
@@ -490,7 +492,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                           dark:text-neutral-200
                           text-sm font-normal"
                             >
-                              {operation === "buy" ? tokenA : tokenB}
+                              {operation === "buy" ? firstToken : tokenB}
                             </div>
                           </div>
                         </div>
@@ -572,10 +574,7 @@ export default function TokenPage({ params }: { params: { id: string } }) {
                           dark:text-neutral-200
                           text-sm font-normal"
                           >
-                            {/* {tokenData.ticker} */}
-
-                            {/* {operation === "sell" ? "ETH" : tokenData.ticker} */}
-                            {operation === "sell" ? tokenA : tokenB}
+                            {operation === "sell" ? firstToken : tokenB}
                           </div>
                         </div>
                       </div>
