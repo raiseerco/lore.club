@@ -14,10 +14,9 @@ import {
   parseEther,
 } from "viem";
 
-import { formatNumber } from "./utils";
 import { parseUnits } from "viem";
 
-const DEFAULT_NETWORK = scrollSepolia; // arbitrumSepolia; // baseSepolia;
+const DEFAULT_NETWORK = baseSepolia; // arbitrumSepolia; // baseSepolia;
 
 // import { createWalletClient } from 'viem'
 
@@ -1896,7 +1895,7 @@ const ethABI = [
 
 export const publicClient = createPublicClient({
   chain: DEFAULT_NETWORK,
-  transport: http("https://scroll-sepolia.drpc.org"),
+  transport: http(),
   // "https://base-sepolia.infura.io/v3/b96017bda544465082cb0d697443f0ee"
 });
 
@@ -1923,7 +1922,7 @@ export async function getTokensCreated() {
     const result = await publicClient.readContract({
       address: `0x${
         process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
-        "Ef29EE1a0E08Dfea72FbD49EBB7C07cD75184719"
+        "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"
         // "3Bb3A3063DAfB15Bd3fF298DCC69564Db44D4D5B"
       }`,
       abi: tokenFactoryABI,
@@ -2179,7 +2178,7 @@ export async function createToken(
     const { request } = await publicClient.simulateContract({
       address: `0x${
         process.env.NEXT_PUBLIC_FACTORY_ADDRESS_DEFAULT ||
-        "3Bb3A3063DAfB15Bd3fF298DCC69564Db44D4D5B"
+        "81345Ac6DdBE6F972173DB12123896A31C6c6ABC"
       }`,
 
       account: `0x${_userAddress.replace("0x", "")}`,
